@@ -1,0 +1,3 @@
+matlab show images 
+
+imagesc(squeeze(images(4,:,:)))
