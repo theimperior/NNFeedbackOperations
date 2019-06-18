@@ -4,6 +4,8 @@ using MAT
 using PyPlot
 using Base.Iterators: repeated, partition
 
+# export make_batch
+
 # loads and processes training data into batches 
 # Data order in the .mat file 
 # images: N_samples x 32 x 32 x 1
