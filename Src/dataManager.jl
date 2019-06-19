@@ -3,6 +3,8 @@ module dataManager
 using MAT 
 using PyPlot
 using Base.Iterators: repeated, partition
+using Statistics
+using ProgressMeter
 
 # export make_batch
 
@@ -32,8 +34,9 @@ function make_minibatch(X, Y, idxset)
     return (X_batch, Y_batch)
 end # function make_minibatch
 
-function make_batch(batch_size=128, filepath="../digitclutter/src/light_debris/light_debris_with_debris.mat")
+function make_batch(;batch_size=128, filepath="../digitclutter/src/light_debris/light_debris_with_debris.mat", normalize=true)
     # load the data from the mat file
+    @info("Reading .mat file form source $(filepath)")
     file = matopen("../digitclutter/src/light_debris/light_debris_with_debris.mat")
     images = read(file, "images")
     targets = read(file, "targets")
@@ -45,12 +48,33 @@ function make_batch(batch_size=128, filepath="../digitclutter/src/light_debris/l
     # rearrange binary targets: targetarray(10) x batchsize(Setsize)
     bin_targets = permutedims(bin_targets, (2, 1))
     
+    setsize = size(images, 4)
+    images = convert(Array{Float32}, images)
+    bin_targets = convert(Array{Float32}, bin_targets)
+    
+    @info("calculate mean and standart deviation of dataset")
+    # calculate normalization matrix (mean, standard deviation)
+    mean_img = mean(images, dims=4)
+    std_img = std(images, mean=mean_img, dims=4)
+    std_img_tmp = std_img
+    std_img_tmp[std_img_tmp.==0] .= 1
+    
+    if(normalize) 
+        p = Progress(setsize, 1) # what's 100% and minimum update interval: 1s
+        for i in 1:setsize
+            images[:, :, :, i] = (images[:, :, :, i] - mean_img) ./ std_img_tmp
+            next!(p)
+        end
+    end
+    
     # uncomment to display one sample of the images
-    # matshow(dropdims(images[:,:,:,10], dims=3), cmap=PyPlot.cm.gray, vmin=0, vmax=255)#, cmap = gray, vmin=0, vmax=255)
+    # matshow(dropdims(images[:,:,:,10], dims=3), cmap=PyPlot.cm.gray, vmin=0, vmax=255)
 
+    @info("creating batches")
+    # TODO Progressbar
     idxsets = partition(1:size(images, 4), batch_size)
     train_set = [make_minibatch(images, bin_targets, i) for i in idxsets];
     
-    return train_set
+    return train_set, mean_img, std_img
 end # function make_batch
 end # module dataManager
