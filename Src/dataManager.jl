@@ -5,6 +5,7 @@ using PyPlot
 using Base.Iterators: repeated, partition
 using Statistics
 using ProgressMeter
+using Printf
 
 # export make_batch
 
@@ -36,7 +37,7 @@ end # function make_minibatch
 
 function make_batch(;batch_size=128, filepath="../digitclutter/src/light_debris/light_debris_with_debris.mat", normalize=true)
     # load the data from the mat file
-    @info("Reading .mat file form source $(filepath)")
+    @printf("Reading .mat file form source %s\n", filepath)
     file = matopen("../digitclutter/src/light_debris/light_debris_with_debris.mat")
     images = read(file, "images")
     targets = read(file, "targets")
@@ -52,7 +53,7 @@ function make_batch(;batch_size=128, filepath="../digitclutter/src/light_debris/
     images = convert(Array{Float32}, images)
     bin_targets = convert(Array{Float32}, bin_targets)
     
-    @info("calculate mean and standart deviation of dataset")
+    @printf("calculate mean and standart deviation of dataset\n")
     # calculate normalization matrix (mean, standard deviation)
     mean_img = mean(images, dims=4)
     std_img = std(images, mean=mean_img, dims=4)
@@ -70,7 +71,7 @@ function make_batch(;batch_size=128, filepath="../digitclutter/src/light_debris/
     # uncomment to display one sample of the images
     # matshow(dropdims(images[:,:,:,10], dims=3), cmap=PyPlot.cm.gray, vmin=0, vmax=255)
 
-    @info("creating batches")
+    @printf("Creating batches\n")
     # TODO Progressbar
     idxsets = partition(1:size(images, 4), batch_size)
     train_set = [make_minibatch(images, bin_targets, i) for i in idxsets];
