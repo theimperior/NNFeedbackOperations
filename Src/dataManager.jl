@@ -26,7 +26,7 @@ function make_minibatch(X, Y, idxset)
     for i in 1:length(idxset)
         
         X_batch[:, :, :, i] = Float32.(X[:, :, :, idxset[i]])
-        Y_batch[:, i] = Y[:, idxset[i]]
+        Y_batch[:, i] = Float32.(Y[:, idxset[i]])
     end    
     # train_set is a set of tuples (x_batch, y_batch) - first bracket -> which tupel, second bracket -Y what of the tupel
     # train_set[1][1]
