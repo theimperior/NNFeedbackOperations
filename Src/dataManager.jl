@@ -35,12 +35,29 @@ function make_minibatch(X, Y, idxset)
     return (X_batch, Y_batch)
 end # function make_minibatch
 
-function make_batch(;batch_size=128, filepath="../digitclutter/src/light_debris/light_debris_with_debris.mat", normalize=true)
+"""
+    make_batch(filepath, batch_size=128, normalize=true)
+    
+Creates batches with size batch_size(default 128) from file at given filepath. Images will be normalized if normalize is set (default true). 
+Structure of the .mat file: 
+
+    fieldname | size
+    ----------------
+       images | N x width x height
+  bin_targets | N x 10
+
+where N denotes the number of samples
+
+TODO: 
+batch_size = -1 in this case create only one batch out of the data with lenght of the data
+create wrapper for concatenating multiple .mat files into training batches
+"""
+function make_batch(filepath; batch_size=128, normalize=true)
     # load the data from the mat file
     @printf("Reading .mat file form source %s\n", filepath)
-    file = matopen("../digitclutter/src/light_debris/light_debris_with_debris.mat")
+    file = matopen(filepath)
     images = read(file, "images")
-    targets = read(file, "targets")
+    #targets = read(file, "targets")
     bin_targets = read(file, "binary_targets")
     close(file) 
     
@@ -78,4 +95,6 @@ function make_batch(;batch_size=128, filepath="../digitclutter/src/light_debris/
     
     return train_set, mean_img, std_img
 end # function make_batch
+
+
 end # module dataManager
