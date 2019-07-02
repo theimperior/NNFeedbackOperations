@@ -11,6 +11,8 @@ BTNet: the BNet including top down connections from the second hidden layer to t
 BLTNet:the BNet including top down and lateral connections 
 
 """
+# dependencies
+# pkg> add Flux, BSON, NNlib, MAT, PyPlot
 
 using Flux, Statistics
 using Flux: crossentropy, onecold
@@ -170,7 +172,7 @@ end
 
 
 
-train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames, batch_size=batch_size)
+train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
 # test_set needs to have the same batchsize as the train_set due to model state init
 test_set = train_set[1] #, tmp1, tmp2 = make_batch(test_folderpath, test_filenames, batch_size=batch_size)
 
