@@ -25,6 +25,7 @@ using .dataManager: make_batch
 using Base
 norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
 
+
 ######################
 # PARAMETERS
 ######################
@@ -38,7 +39,17 @@ const decay_rate = 0.1f0
 const decay_step = 40
 # number of timesteps the network is unrolled
 const time_steps = 4
-# end of PARAMETERS
+usegpu = true
+config = "10debris" # 30debris, 50debris, 3digits, 4 digits, 5digits
+train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat"
+train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat"
+test_folderpath_debris = "../digitclutter/digitdebris/testset/mat"
+test_folderpath_digits = "../digitclutter/digitclutter/testset/mat"
+# end of parameters
+
+if usegpu
+    using CuArrays
+end
 
 hidden = Dict(
     "l1" => zeros(Float32, 32, 32, 32, 10),
@@ -108,17 +119,20 @@ BLChain = spoerer_model_bl(Float32, inputsize=(32, 32), kernel=(3, 3), features=
 BTChain = spoerer_model_bt(Float32, inputsize=(32, 32), kernel=(3, 3), features=32)
 BLTChain = spoerer_model_bt(Float32, inputsize=(32, 32), kernel=(3, 3), features=32)
 
+if usegpu
+    BModel = BModel |> gpu
+	BKModel = BKModel |> gpu
+	BFModel = BFModel |> gpu
+	BLChain = BLChain |> gpu
+	BTChain = BTChain |> gpu
+	BLTChain = BLTChain |> gpu
+    hidden = Dict(key => gpu(val) for (key, val) in pairs(hidden))
+end
+
+
 BLModel = Flux.Recur(BLChain, hidden)
 BTModel = Flux.Recur(BTChain, hidden)
 BLTModel = Flux.Recur(BLTChain, hidden)
-
-config = "10debris" # 30debris, 50debris, 3digits, 4 digits, 5digits
-
-train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat"
-train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat"
-
-test_folderpath_debris = "../digitclutter/digitdebris/testset/mat"
-test_folderpath_digits = "../digitclutter/digitclutter/testset/mat"
 
 if(config == "10debris")
     train_folderpath = train_folderpath_debris
@@ -159,6 +173,12 @@ end
 train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames, batch_size=100)
 # test_set needs to have the same batchsize as the train_set due to model state init
 test_set = train_set[1] #, tmp1, tmp2 = make_batch(test_folderpath, test_filenames, batch_size=100)
+
+if usegpu
+    train_set = gpu(train_set)
+	test_set = gpu(test_set)
+end
+
 
 @printf("loaded %d batches of size %d\n", length(train_set), size(train_set[1][1], 4))
 
