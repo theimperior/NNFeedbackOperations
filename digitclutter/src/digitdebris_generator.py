@@ -16,25 +16,25 @@ Generates an image set with the same statistics and the light debris data set de
 ##########################
 # Dataset 100.000 Training samples, 10.000 Validation samples, 10.000 Test samples
 # Warning: 100.000 images result in 75GB of images during rendering
-n_samples = 200
+n_samples = 5000
 # if diskspace is limited increase n_batches 
 # This will create n batches with n samples each
-n_batches = 3
+n_batches = 10
 
 #number of fragments present in each image (10, 30, 50)
-n_debris = [10, 11]
-#n_debris = [30, 31]
+#n_debris = [10, 11]
+n_debris = [30, 31]
 #n_debris = [50, 51]
 
 font_set = ['arial-bold']
 
-for i in range(1, n_batches+1):
+for k in range(1, n_batches+1):
     # Generate samples
     clutter_list = [generate.sample_clutter(font_set=font_set) for i in range(n_samples)]
 
     # Save image set
-    clutter_list = io.name_files('../digitdebris/' + str(n_debris[0]) + 'debris', clutter_list=clutter_list)
-    io.save_image_set(clutter_list, '../digitdebris/' + str(n_samples) + '_' + str(n_debris[0]) + 'debris.csv')
+    clutter_list = io.name_files('A:/digitdebris/' + str(n_debris[0]) + 'debris', clutter_list=clutter_list)
+    io.save_image_set(clutter_list, 'A:/digitdebris/' + str(n_samples) + '_' + str(n_debris[0]) + 'debris' + str(k) + '.csv')
 
     # Render images and save as mat file
     print('Rendering images...')
@@ -47,7 +47,7 @@ for i in range(1, n_batches+1):
         bar.update(i+1)
     print('Saving mat file...')
     fname_list = [cl.fname for cl in clutter_list]
-    images_dict = io.save_images_as_mat(abspath('../digitdebris/' + str(n_samples) + '_' + str(n_debris[0]) + '_no_debris.mat'), 
+    images_dict = io.save_images_as_mat(abspath('A:/digitdebris/' + str(n_samples) + '_' + str(n_debris[0]) + '_no_debris' + str(k) + '.mat'), 
                                         clutter_list, (32,32), fname_list=fname_list, delete_bmps=True, overwrite_wdir=True)
 
     # Make debris 
@@ -59,5 +59,5 @@ for i in range(1, n_batches+1):
         'targets':images_dict['targets'],
         'binary_targets':images_dict['binary_targets']
         }
-    savemat('../digitdebris/' + str(n_samples) + '_' + str(n_debris[0]) + 'debris' + i + '.mat', images_with_debris_dict)
-    print('Done. Images saved at {0}'.format(abspath('../digitdebris/' + str(n_samples) + '_' + str(n_debris[0]) + 'debris' + i + '.mat')))
+    savemat('A:/digitdebris/' + str(n_samples) + '_' + str(n_debris[0]) + 'debris' + str(k) + '.mat', images_with_debris_dict)
+    print('Done. Images saved at {0}'.format(abspath('A:/digitdebris/' + str(n_samples) + '_' + str(n_debris[0]) + 'debris' + str(k) + '.mat')))

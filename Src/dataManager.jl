@@ -52,6 +52,7 @@ TODO:
 batch_size = -1 in this case create only one batch out of the data with lenght of the data
 create wrapper for concatenating multiple .mat files into training batches
 """
+function make_batch(filepath, filenames...; batch_size=128, normalize=true)
 function make_batch(filepath; batch_size=128, normalize=true)
     # load the data from the mat file
     @printf("Reading .mat file form source %s\n", filepath)
