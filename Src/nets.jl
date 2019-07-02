@@ -17,7 +17,7 @@ using Flux: crossentropy, onecold
 using Printf, BSON
 import LinearAlgebra: norm
 using NNlib
-using FeedbackConvNets
+using FeedbackNets
 
 include("./dataManager.jl")
 using .dataManager: make_batch
