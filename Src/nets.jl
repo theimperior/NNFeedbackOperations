@@ -34,7 +34,7 @@ const momentum = 0.9f0
 const lambda = 0.0005f0
 init_learning_rate = 0.01f0
 learning_rate = init_learning_rate
-const epochs = 5
+const epochs = 100
 const decay_rate = 0.1f0
 const decay_step = 40
 # number of timesteps the network is unrolled
@@ -170,9 +170,9 @@ end
 
 
 
-train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames, batch_size=100)
+train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames, batch_size=batch_size)
 # test_set needs to have the same batchsize as the train_set due to model state init
-test_set = train_set[1] #, tmp1, tmp2 = make_batch(test_folderpath, test_filenames, batch_size=100)
+test_set = train_set[1] #, tmp1, tmp2 = make_batch(test_folderpath, test_filenames, batch_size=batch_size)
 
 if usegpu
     train_set = gpu(train_set)
