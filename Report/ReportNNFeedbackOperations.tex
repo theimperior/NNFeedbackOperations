@@ -56,14 +56,14 @@ BCOR15mm               % Bindekorrektur
   numberstyle=\tiny}
 
 % hier Namen etc. einsetzen
-\newcommand{\fullname}{Vorname Nachname}
-\newcommand{\email}{vorname.nachname@uni-ulm.de}
+\newcommand{\fullname}{Sebastian Vendt}
+\newcommand{\email}{Sebastian.Vendt@uni-ulm.de}
 \newcommand{\titel}{Der Titel der Arbeit, meist länger als eine Zeile}
-\newcommand{\jahr}{2018}
-\newcommand{\matnr}{123456}
-\newcommand{\gutachterA}{Prof.\,Dr.\,Streng Geheim}
-\newcommand{\gutachterB}{Prof.\,Dr.\,Un Leserlich}
-\newcommand{\betreuer}{Betreuername}
+\newcommand{\jahr}{2019}
+\newcommand{\matnr}{752219}
+\newcommand{\gutachterA}{}
+\newcommand{\gutachterB}{}
+\newcommand{\betreuer}{Christian Jarvers}
 
 % hier die Fakultät auswählen
 %\newcommand{\fakultaet}{---  Im Quellcode anpassen nicht vergessen! ---}
@@ -73,7 +73,7 @@ BCOR15mm               % Bindekorrektur
 %\newcommand{\fakultaet}{Naturwissenschaften}
 
 % hier das Institut einsetzen
-\newcommand{\institut}{--- Institut im Quellcode anpassen nicht vergessen! ---}
+\newcommand{\institut}{Institut für Neuroinformatik}
 
 % Informationen, die LaTeX in die PDF-Datei schreibt
 \pdfinfo{
@@ -115,12 +115,12 @@ pdfborder=0 0 0	% keine Box um die Links!
 \mdseries \institut}\\[2cm]
 
 \parbox{140mm}{\bfseries \LARGE \titel}\\[2.5em]
-{\footnotesize Abschlussarbeit an der Universität Ulm}\\[3em]
+{\footnotesize Projektseminar Neuroinformatik an der Universität Ulm}\\[3em]
 
 {\footnotesize \bfseries Vorgelegt von:}\\
 {\footnotesize \fullname\\ \email}\\ \matnr\\[2em]
-{\footnotesize \bfseries Gutachter:}\\                     
-{\footnotesize \gutachterA\\ \gutachterB}\\[2em]
+%{\footnotesize \bfseries Gutachter:}\\                     
+%{\footnotesize \gutachterA\\ \gutachterB}\\[2em]
 {\footnotesize \bfseries Betreuer:}\\ 
 {\footnotesize \betreuer}\\\\
 {\footnotesize \jahr}
@@ -136,7 +136,7 @@ pdfborder=0 0 0	% keine Box um die Links!
   Fassung \today \\\vfill
   \copyright~\jahr~\fullname\\[0.5em]
 % Wenn Sie Ihre Arbeit unter einer freien Lizenz bereitstellen möchten, können Sie die nächste Zeile in Ihren Code aufnehmen. Bitte beachten Sie, dass Sie hierfür an allen Inhalten, inklusive enthaltener Abbildungen, die notwendigen Rechte benötigen! Beim Veröffentlichungsexemplar Ihrer Dissertation achten Sie bitte darauf, dass der Lizenztext nicht den Angaben in den Metadaten der genutzten Publikationsplattform widerspricht. Nähere Information zu den Creative Commons Lizenzen erhalten Sie hier: https://creativecommons.org/licenses/
-%This work is licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) License. To view a copy of this license, visit \href{https://creativecommons.org/licenses/by/4.0/}{https://creativecommons.org/licenses/by/4.0/} or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA. \\
+This work is licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) License. To view a copy of this license, visit \href{https://creativecommons.org/licenses/by/4.0/}{https://creativecommons.org/licenses/by/4.0/} or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA. \\
   Satz: PDF-\LaTeXe
 }
 
@@ -147,7 +147,10 @@ pdfborder=0 0 0	% keine Box um die Links!
 
 \mainmatter
 \input{chapters/einleitung}
-% hier weitere Kapitel einbinden
+\input{chapters/vorstellungPaper}
+\input{chapters/verifikation}
+\input{chapters/zusammenfassung}
+
 
 \appendix
 % hier Anhänge einbinden
