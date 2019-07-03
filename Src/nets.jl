@@ -54,8 +54,8 @@ if usegpu
 end
 
 hidden = Dict(
-    "l1" => zeros(Float32, 32, 32, 32, 10),
-    "l2" => zeros(Float32, 16, 16, 32, 10)
+    "l1" => zeros(Float32, 32, 32, 32, 100),
+    "l2" => zeros(Float32, 16, 16, 32, 100)
     )
 
 function adapt_learnrate(epoch_idx)
@@ -174,7 +174,7 @@ end
 
 train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
 # test_set needs to have the same batchsize as the train_set due to model state init
-test_set, tmp1, tmp2 = make_batch(test_folderpath, test_filenames..., batch_size=batch_size)
+test_set, tmp1, tmp2 = make_batch(train_folderpath, test_filenames..., batch_size=batch_size)
 
 if usegpu
     train_set = gpu.(train_set)
