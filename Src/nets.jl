@@ -34,7 +34,7 @@ norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T))
 const batch_size = 100
 const momentum = 0.9f0
 const lambda = 0.0005f0
-init_learning_rate = 0.01f0
+init_learning_rate = 0.1f0
 learning_rate = init_learning_rate
 const epochs = 100
 const decay_rate = 0.1f0
@@ -43,10 +43,10 @@ const decay_step = 40
 const time_steps = 4
 usegpu = true
 config = "10debris" # 30debris, 50debris, 3digits, 4 digits, 5digits
-train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat"
-train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat"
-test_folderpath_debris = "../digitclutter/digitdebris/testset/mat"
-test_folderpath_digits = "../digitclutter/digitclutter/testset/mat"
+train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
+train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
+test_folderpath_debris = "../digitclutter/digitdebris/testset/mat/"
+test_folderpath_digits = "../digitclutter/digitclutter/testset/mat/"
 # end of parameters
 
 if usegpu
@@ -72,7 +72,7 @@ function trainReccurentNet(reccurent_model, train_set, test_set)
         return loss_val
     end
     
-    function accuracy(test_set::Tuple)
+    function accuracy(test_set)
         for i in 1:time_steps-1
             y_hat = reccurent_model(test_set[1])
         end
@@ -95,7 +95,7 @@ function trainReccurentNet(reccurent_model, train_set, test_set)
 end
 
 function trainFeedforwardNet(feedforward_model, train_set, test_set)
-    function accuracy(test_set::Tuple)
+    function accuracy(test_set)
         return mean(onecold(feedforward_model(test_set[1])) .== onecold(test_set[2]))
     end
     
@@ -122,13 +122,13 @@ BTChain = spoerer_model_bt(Float32, inputsize=(32, 32), kernel=(3, 3), features=
 BLTChain = spoerer_model_bt(Float32, inputsize=(32, 32), kernel=(3, 3), features=32)
 
 if usegpu
-    BModel = BModel |> gpu
-	BKModel = BKModel |> gpu
-	BFModel = BFModel |> gpu
-	BLChain = BLChain |> gpu
-	BTChain = BTChain |> gpu
-	BLTChain = BLTChain |> gpu
-    hidden = Dict(key => gpu(val) for (key, val) in pairs(hidden))
+    BModel = gpu(BModel)
+	BKModel = gpu(BKModel)
+	BFModel = gpu(BFModel)
+	BLChain = gpu(BLChain)
+	BTChain = gpu(BTChain)
+	BLTChain = gpu(BLTChain)
+    hidden = Dict(key => val |> gpu for (key, val) in pairs(hidden))
 end
 
 
@@ -174,11 +174,11 @@ end
 
 train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
 # test_set needs to have the same batchsize as the train_set due to model state init
-test_set = train_set[1] #, tmp1, tmp2 = make_batch(test_folderpath, test_filenames, batch_size=batch_size)
+test_set, tmp1, tmp2 = make_batch(test_folderpath, test_filenames..., batch_size=batch_size)
 
 if usegpu
-    train_set = gpu(train_set)
-	test_set = gpu(test_set)
+    train_set = gpu.(train_set)
+	test_set = gpu.(test_set)
 end
 
 
