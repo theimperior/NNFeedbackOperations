@@ -100,9 +100,9 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set)
     end
 	
 	function loss(x, y)
-		loss = crossentropy(feedforward_model(x), y) + lambda * sum(norm, params(feedforward_model))
-	    @printf("Loss: %f\n", loss)
-	    return loss
+		loss_val = crossentropy(feedforward_model(x), y) + lambda * sum(norm, params(feedforward_model))
+	    @printf("Loss: %f\n", loss_val)
+	    return loss_val
 	end
     
     opt = Momentum(learning_rate, momentum)
