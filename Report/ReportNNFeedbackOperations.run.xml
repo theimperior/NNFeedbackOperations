@@ -41,14 +41,14 @@
   >
 ]>
 <requests version="1.0">
-  <internal package="biblatex" priority="9" active="0">
+  <internal package="biblatex" priority="9" active="1">
     <generic>latex</generic>
     <provides type="dynamic">
-      <file>2017-11-abschlussarbeiten.aux</file>
-      <file>2017-11-abschlussarbeiten-blx.bib</file>
+      <file>ReportNNFeedbackOperations.aux</file>
+      <file>ReportNNFeedbackOperations-blx.bib</file>
     </provides>
     <requires type="dynamic">
-      <file>2017-11-abschlussarbeiten.bbl</file>
+      <file>ReportNNFeedbackOperations.bbl</file>
     </requires>
     <requires type="static">
       <file>blx-dm.def</file>
@@ -63,26 +63,26 @@
       <file>ngerman.lbx</file>
     </requires>
   </internal>
-  <external package="biblatex" priority="5" active="0">
+  <external package="biblatex" priority="5" active="1">
     <generic>bibtex</generic>
     <cmdline>
       <binary>bibtex8</binary>
       <option>--wolfgang</option>
       <option>--min_crossrefs 2</option>
-      <infile>2017-11-abschlussarbeiten</infile>
+      <infile>ReportNNFeedbackOperations</infile>
     </cmdline>
     <input>
-      <file>2017-11-abschlussarbeiten.aux</file>
+      <file>ReportNNFeedbackOperations.aux</file>
     </input>
     <output>
-      <file>2017-11-abschlussarbeiten.bbl</file>
+      <file>ReportNNFeedbackOperations.bbl</file>
     </output>
     <provides type="dynamic">
-      <file>2017-11-abschlussarbeiten.bbl</file>
+      <file>ReportNNFeedbackOperations.bbl</file>
     </provides>
     <requires type="dynamic">
-      <file>2017-11-abschlussarbeiten.aux</file>
-      <file>2017-11-abschlussarbeiten-blx.bib</file>
+      <file>ReportNNFeedbackOperations.aux</file>
+      <file>ReportNNFeedbackOperations-blx.bib</file>
     </requires>
     <requires type="editable">
       <file>bibliography.bib</file>

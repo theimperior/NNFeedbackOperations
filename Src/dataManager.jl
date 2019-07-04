@@ -4,7 +4,6 @@ using MAT
 using PyPlot
 using Base.Iterators: repeated, partition
 using Statistics
-using ProgressMeter
 using Printf
 
 # export make_batch
@@ -52,40 +51,57 @@ TODO:
 batch_size = -1 in this case create only one batch out of the data with lenght of the data
 create wrapper for concatenating multiple .mat files into training batches
 """
+# function make_batch(filepath; batch_size=128, normalize=true)
 function make_batch(filepath, filenames...; batch_size=128, normalize=true)
-function make_batch(filepath; batch_size=128, normalize=true)
-    # load the data from the mat file
-    @printf("Reading .mat file form source %s\n", filepath)
-    file = matopen(filepath)
-    images = read(file, "images")
-    #targets = read(file, "targets")
-    bin_targets = read(file, "binary_targets")
-    close(file) 
-    
+    images = nothing
+    bin_targets = nothing
+    for (i, filename) in enumerate(filenames)
+        # load the data from the mat file
+        file = "$filepath$filename"
+        @printf("Reading %d of %d from %s\n", i, length(filenames), file)
+        matfile = matopen(file)
+        # size(images) = (N, width, height, 1)
+        imagepart = read(matfile, "images")
+        # size(bin_targets) = (N, 10)
+        bin_targetpart = read(matfile, "binary_targets")
+        close(matfile) 
+        if(isnothing(images))
+            images = imagepart
+            bin_targets = bin_targetpart
+        else
+            images = cat(dims=1, images, imagepart)
+            bin_targets = cat(dims=1, bin_targets, bin_targetpart)   
+        end
+        
+    end
+
     # rearrange the images array so it matches the convention of Flux width x height x channels x batchsize(Setsize)    
     images = permutedims(images, (2, 3, 4, 1))
     # rearrange binary targets: targetarray(10) x batchsize(Setsize)
     bin_targets = permutedims(bin_targets, (2, 1))
+   
+    @printf("Dimension of images (%d, %d, %d, %d)\n", size(images)...)
+    @printf("Dimension of binary targets (%d, %d)\n", size(bin_targets)...)
     
     setsize = size(images, 4)
-    images = convert(Array{Float32}, images)
-    bin_targets = convert(Array{Float32}, bin_targets)
+    images = convert(Array{Float64}, images) 
     
-    @printf("calculate mean and standart deviation of dataset\n")
-    # calculate normalization matrix (mean, standard deviation)
     mean_img = mean(images, dims=4)
     std_img = std(images, mean=mean_img, dims=4)
-    std_img_tmp = std_img
-    std_img_tmp[std_img_tmp.==0] .= 1
-    
-    if(normalize) 
-        p = Progress(setsize, 1) # what's 100% and minimum update interval: 1s
+    if(normalize)
+        @printf("normalize dataset...\n")
+        std_img_tmp = std_img
+        std_img_tmp[std_img_tmp.==0] .= 1
         for i in 1:setsize
             images[:, :, :, i] = (images[:, :, :, i] - mean_img) ./ std_img_tmp
-            next!(p)
         end
     end
     
+    # Convert to Float32
+    bin_targets = convert(Array{Float32}, bin_targets)
+    images = convert(Array{Float32}, images) 
+    mean_img = convert(Array{Float32}, mean_img)
+    std_img = convert(Array{Float32}, std_img)
     # uncomment to display one sample of the images
     # matshow(dropdims(images[:,:,:,10], dims=3), cmap=PyPlot.cm.gray, vmin=0, vmax=255)
 
@@ -96,6 +112,4 @@ function make_batch(filepath; batch_size=128, normalize=true)
     
     return train_set, mean_img, std_img
 end # function make_batch
-
-
 end # module dataManager
