@@ -187,7 +187,8 @@ if usegpu
 end
 
 
-@printf("loaded %d batches of size %d\n", length(train_set), size(train_set[1][1], 4))
+@printf("loaded %d batches of size %d for training\n", length(train_set), size(train_set[1][1], 4))
+@printf("loaded %d batches of size %d for testing\n", length(test_set), size(test_set[1][1], 4))
 
 @info("Training BModel with $config\n")
 best_acc = trainFeedforwardNet(BModel, train_set, test_set[1])
