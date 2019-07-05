@@ -95,8 +95,8 @@ function trainReccurentNet(reccurent_model, train_set, test_set)
 end
 
 function trainFeedforwardNet(feedforward_model, train_set, test_set)
-    function accuracy(test_set)
-        return mean(onecold(feedforward_model(test_set[1])) .== onecold(test_set[2]))
+    function accuracy(x, y)
+        return mean(onecold(feedforward_model(x)) .== onecold(y))
     end
 	
 	function loss(x, y)
@@ -109,11 +109,11 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set)
     for i in 1:epochs
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        acc = accuracy(test_set)
-        @printf("Accuracy %f in epoch %d\n", acc, i)
+        acc = accuracy(test_set[1], test_set[2])
+        @printf("Accuracy %f in epoch %f\n", acc, i)
         flush(Base.stdout)
     end
-    acc = accuracy(test_set)
+    acc = accuracy(test_set[1], test_set[2])
     @printf("Final accuracy on test set: %d\n", acc)
     return acc
 end
@@ -133,7 +133,7 @@ if usegpu
 	BLChain = gpu(BLChain)
 	BTChain = gpu(BTChain)
 	BLTChain = gpu(BLTChain)
-    hidden = Dict(key => val |> gpu for (key, val) in pairs(hidden))
+    hidden = Dict(key => gpu(val) for (key, val) in pairs(hidden))
 end
 
 
