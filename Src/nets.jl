@@ -100,9 +100,10 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set)
     end
 	
 	function loss(x, y)
-		loss_val = crossentropy(feedforward_model(x), y) + lambda * sum(norm, params(feedforward_model))
-	    @printf("Loss: %f\n", loss_val)
-	    return loss_val
+		#loss_val = crossentropy(feedforward_model(x), y) + lambda * sum(norm, params(feedforward_model))
+	    #@printf("Loss: %f\n", loss_val)
+		loss_val = y .* log.(feedforward_model(x)) .+ (1 .- y) .* log.(1 .- feedforward_model(x))
+	    return sum(loss_val, dims=1)
 	end
     
     opt = Momentum(learning_rate, momentum)
@@ -110,11 +111,12 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set)
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         acc = accuracy(test_set[1], test_set[2])
-        @printf("Accuracy %f in epoch %f\n", acc, i)
+        @printf("Accuracy %f in epoch %d\n", acc, i)
+		@printf("Loss %f in epoch %d\n", loss(test_set[1], test_set[2]), i) 
         flush(Base.stdout)
     end
     acc = accuracy(test_set[1], test_set[2])
-    @printf("Final accuracy on test set: %d\n", acc)
+    @printf("Final accuracy on test set: %f\n", acc)
     return acc
 end
 
