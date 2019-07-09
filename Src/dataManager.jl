@@ -1,7 +1,6 @@
 module dataManager
 
 using MAT 
-using PyPlot
 using Base.Iterators: repeated, partition
 using Statistics
 using Printf
@@ -102,7 +101,8 @@ function make_batch(filepath, filenames...; batch_size=128, normalize=true)
     images = convert(Array{Float32}, images) 
     mean_img = convert(Array{Float32}, mean_img)
     std_img = convert(Array{Float32}, std_img)
-    # uncomment to display one sample of the images
+	
+    # display one sample of the images depends on PyPlot!
     # matshow(dropdims(images[:,:,:,10], dims=3), cmap=PyPlot.cm.gray, vmin=0, vmax=255)
 
     @printf("Creating batches\n")

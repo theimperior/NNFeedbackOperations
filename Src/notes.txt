@@ -1,0 +1,33 @@
+## funktioniert nicht -> Fehler: ERROR: LoadError: LLVM error: Program used external function '__nv_logf' which could not be resolved!
+loss_val = y .* log.(y_hat .+ eps(Float32)) .+ (1 .- y) .* log.(1 .- y_hat .+ eps(Float32))
+
+
+## this works but loss doesn't decrease and accuracy stays the same...
+@info("calc loss...")
+loss_val = y .* log.(feedforward_model(x) .+ eps(Float32)) 
+@show(typeof(loss_val))
+@info("calc cross entropy")
+loss_val2 = (1 .- y) .* log.(1 .- feedforward_model(x) .+ eps(Float32))
+@show(typeof(loss_val2))
+@info("summming")
+loss_val3 = -sum((loss_val .+ loss_val2), dims=1)
+@show(typeof(loss_val3))
+@info("divide by batchsize")
+loss_val4 = (sum(loss_val3) * (1 // size(y, 2)))
+@show(typeof(loss_val4))
+return loss_val4
+
+
+
+## gives readonlymemory error
+y_hat = feedforward_model(x)
+loss_val = -sum(y .* log.(y_hat .+ eps(Float32)) .+ (1 .- y) .* log.(1 .- y_hat .+ eps(Float32))) * (1 // size(y, 2))
+return loss_val
+
+Neither Flux.crossentropy nor crossentropy changed something
+
+## no method matching + 
+y_hat = feedforward_model(x)
+@show(y_hat)
+loss_val = y .* log.(y_hat + eps(Float32)) + (1 - y) .* log.(1 - y_hat + eps(Float32))
+
