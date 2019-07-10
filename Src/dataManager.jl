@@ -97,7 +97,7 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
 		if(truncate_imgs)
 			# truncate the last 1% beyond 2.576 sigma 
 			images[images .> 2.576] .= 2.576
-			images[images <. -2.576] .= -2.576
+			images[images .< -2.576] .= -2.576
 		end
     end
     
