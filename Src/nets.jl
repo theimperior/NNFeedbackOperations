@@ -15,16 +15,13 @@ BLTNet:the BNet including top down and lateral connections
 # pkg> add Flux, BSON, NNlib, MAT, PyPlot
 
 using Flux, Statistics
-using Flux: crossentropy, onecold
+using Flux: onecold
 using Printf, BSON
-import LinearAlgebra: norm
 using NNlib
 using FeedbackNets
-
 include("./dataManager.jl")
 using .dataManager: make_batch
-
-using Base
+import LinearAlgebra: norm
 norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
 
 
@@ -41,8 +38,8 @@ const decay_rate = 0.1f0
 const decay_step = 40
 # number of timesteps the network is unrolled
 const time_steps = 4
-usegpu = true
-config = "10debris" # 30debris, 50debris, 3digits, 4 digits, 5digits
+const usegpu = true
+const config = "10debris" # 30debris, 50debris, 3digits, 4 digits, 5digits
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
 train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
 test_folderpath_debris = "../digitclutter/digitdebris/testset/mat/"
@@ -62,62 +59,79 @@ function adapt_learnrate(epoch_idx)
     return init_learning_rate * decay_rate^(epoch_idx / decay_step)
 end
 
+function binarycrossentropy(y_hat, y)
+	# splitting the computation of the binary crossentropy into two parts 
+	# writing it in one equation would crash the script...
+	a = -y .* log.(y_hat .+ eps(Float32))
+	b = -(1 .- y) .* log.(1 .- y_hat .+ eps(Float32))
+	c = a .+ b
+	return sum(c) * 1 // length(y)
+end
+
 function trainReccurentNet(reccurent_model, train_set, test_set)
-    function loss(x, y)
+    function accuracy(data_set)
+		acc = 0
+		if( config == "10debris" || config == "30debris" || config == "50debris" )
+			for (data, labels) in data_set
+				# read the model output 1 times less, discard the output and read out again when calculating the onecold vector
+				for i in 1:time_steps-1
+					y_hat = reccurent_model(data)
+				end
+				global acc += mean(onecold(reccurent_model(data)) .== onecold(labels))
+				Flux.reset!(reccurent_model)
+			end
+			return acc / length(data_set)
+		else
+				# TODO...
+        end
+    end
+	
+	function loss(x, y)
         loss_val = 0.0f0
         for i in 1:time_steps
-            loss_val += crossentropy(reccurent_model(x), y) + lambda * sum(norm, params(reccurent_model))
+            global loss_val += binarycrossentropy(reccurent_model(x), y)
         end
-        Flux.reset!(reccurent_model)
+		Flux.reset!(reccurent_model)
+		loss_val /= time_steps
+		loss_val += lambda * sum(norm, params(reccurent_model))
         return loss_val
-    end
-    
-    function accuracy(test_set)
-        for i in 1:time_steps-1
-            y_hat = reccurent_model(test_set[1])
-        end
-        acc = mean(onecold(reccurent_model(test_set[1])) .== onecold(test_set[2]))
-        Flux.reset!(reccurent_model)
-        return acc
     end
     
     opt = Momentum(learning_rate, momentum)
     for i in 1:epochs
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        acc = accuracy(test_set)
-        @printf("Accuracy %f in epoch %d\n", acc, i)
-        flush(Base.stdout)
+        if (rem(i, 20) == 0) @printf("Epoch %d: Accuracy: %f, Loss: %f\n", i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) end
     end
-    acc = accuracy(test_set)
-    @printf("final accuracy: %d\n", accuracy(test_set))
-    return acc
+    return accuracy(test_set)
 end
 
+
 function trainFeedforwardNet(feedforward_model, train_set, test_set)
-    function accuracy(x, y)
-        return mean(onecold(feedforward_model(x)) .== onecold(y))
+    function accuracy(data_set)
+		acc = 0
+		if( config == "10debris" || config == "30debris" || config == "50debris" )
+			for (data, labels) in data_set
+				global acc += mean(onecold(feedforward_model(data)) .== onecold(labels))
+			end
+			return acc / length(data_set)
+		else
+			# TODO...
+		end
     end
 	
 	function loss(x, y)
-		#loss_val = crossentropy(feedforward_model(x), y) + lambda * sum(norm, params(feedforward_model))
-	    #@printf("Loss: %f\n", loss_val)
-		loss_val = y .* log.(feedforward_model(x)) .+ (1 .- y) .* log.(1 .- feedforward_model(x))
-	    return sum(loss_val, dims=1)
+		y_hat = feedforward_model(x)
+		return binarycrossentropy(y_hat, y) + lambda * sum(norm, params(feedforward_model))
 	end
     
     opt = Momentum(learning_rate, momentum)
     for i in 1:epochs
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        acc = accuracy(test_set[1], test_set[2])
-        @printf("Accuracy %f in epoch %d\n", acc, i)
-		@printf("Loss %f in epoch %d\n", loss(test_set[1], test_set[2]), i) 
-        flush(Base.stdout)
+        if (rem(i, 20) == 0) @printf("Epoch %d: Accuracy: %f, Loss: %f\n", i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) end
     end
-    acc = accuracy(test_set[1], test_set[2])
-    @printf("Final accuracy on test set: %f\n", acc)
-    return acc
+    return accuracy(test_set)
 end
 
 @printf("Constructing models...\n")
@@ -181,7 +195,7 @@ end
 
 train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
 # test_set needs to have the same batchsize as the train_set due to model state init
-test_set, tmp1, tmp2 = make_batch(train_folderpath, test_filenames..., batch_size=batch_size)
+test_set, tmp1, tmp2 = make_batch(test_folderpath, test_filenames..., batch_size=batch_size)
 
 if usegpu
     train_set = gpu.(train_set)
@@ -193,26 +207,26 @@ end
 @printf("loaded %d batches of size %d for testing\n", length(test_set), size(test_set[1][1], 4))
 
 @info("Training BModel with $config\n")
-best_acc = trainFeedforwardNet(BModel, train_set, test_set[1])
+best_acc = trainFeedforwardNet(BModel, train_set, test_set)
 BSON.@save "BModel_$config.bson" BModel best_acc
 
 @info("Training BKModel with $config\n")
-best_acc = trainFeedforwardNet(BKModel, train_set, test_set[1])
+best_acc = trainFeedforwardNet(BKModel, train_set, test_set)
 BSON.@save "BKModel_$config.bson" BKModel best_acc
 
 @info("Training BFModel with $config\n")
-best_acc = trainFeedforwardNet(BFModel, train_set, test_set[1])
+best_acc = trainFeedforwardNet(BFModel, train_set, test_set)
 BSON.@save "BFModel_$config.bson" BFModel best_acc
 
 @info("Training BLModel with $config\n")
-best_acc = trainReccurentNet(BLModel, train_set, test_set[1])
+best_acc = trainReccurentNet(BLModel, train_set, test_set)
 BSON.@save "BLModel_$config.bson" BLModel best_acc
 
 @info("Training BTModel with $config\n")
-best_acc = trainReccurentNet(BTModel, train_set, test_set[1])
+best_acc = trainReccurentNet(BTModel, train_set, test_set)
 BSON.@save "BTModel_$config.bson" BTModel best_acc
 
 @info("Training BLTModel with $config\n")
-best_acc = trainReccurentNet(BLTModel, train_set, test_set[1])
+best_acc = trainReccurentNet(BLTModel, train_set, test_set)
 BSON.@save "BLTModel_$config.bson" BLTModel best_acc
 

@@ -51,7 +51,7 @@ batch_size = -1 in this case create only one batch out of the data with lenght o
 create wrapper for concatenating multiple .mat files into training batches
 """
 # function make_batch(filepath; batch_size=128, normalize=true)
-function make_batch(filepath, filenames...; batch_size=128, normalize=true)
+function make_batch(filepath, filenames...; batch_size=100, normalize=true, truncate_imgs=true)
     images = nothing
     bin_targets = nothing
     for (i, filename) in enumerate(filenames)
@@ -88,12 +88,17 @@ function make_batch(filepath, filenames...; batch_size=128, normalize=true)
     mean_img = mean(images, dims=4)
     std_img = std(images, mean=mean_img, dims=4)
     if(normalize)
-        @printf("normalize dataset...\n")
+        @printf("normalize dataset\n")
         std_img_tmp = std_img
-        std_img_tmp[std_img_tmp.==0] .= 1
+        std_img_tmp[std_img_tmp .== 0] .= 1
         for i in 1:setsize
             images[:, :, :, i] = (images[:, :, :, i] - mean_img) ./ std_img_tmp
         end
+		if(truncate_imgs)
+			# truncate the last 1% beyond 2.576 sigma 
+			images[images .> 2.576] .= 2.576
+			images[images <. -2.576] .= -2.576
+		end
     end
     
     # Convert to Float32
