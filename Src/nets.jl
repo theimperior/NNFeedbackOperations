@@ -77,7 +77,7 @@ function trainReccurentNet(reccurent_model, train_set, test_set)
 				for i in 1:time_steps-1
 					y_hat = reccurent_model(data)
 				end
-				global acc += mean(onecold(reccurent_model(data)) .== onecold(labels))
+				acc += mean(onecold(reccurent_model(data)) .== onecold(labels))
 				Flux.reset!(reccurent_model)
 			end
 			return acc / length(data_set)
@@ -89,7 +89,7 @@ function trainReccurentNet(reccurent_model, train_set, test_set)
 	function loss(x, y)
         loss_val = 0.0f0
         for i in 1:time_steps
-            global loss_val += binarycrossentropy(reccurent_model(x), y)
+            loss_val += binarycrossentropy(reccurent_model(x), y)
         end
 		Flux.reset!(reccurent_model)
 		loss_val /= time_steps
@@ -112,7 +112,7 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set)
 		acc = 0
 		if( config == "10debris" || config == "30debris" || config == "50debris" )
 			for (data, labels) in data_set
-				global acc += mean(onecold(feedforward_model(data)) .== onecold(labels))
+				acc += mean(onecold(feedforward_model(data)) .== onecold(labels))
 			end
 			return acc / length(data_set)
 		else
