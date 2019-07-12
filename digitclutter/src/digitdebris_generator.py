@@ -19,11 +19,11 @@ Generates an image set with the same statistics and the light debris data set de
 n_samples = 5000
 # if diskspace is limited increase n_batches 
 # This will create n batches with n samples each
-n_batches = 10
+n_batches = 2
 
 #number of fragments present in each image (10, 30, 50)
-#n_debris = [10, 11]
-n_debris = [30, 31]
+n_debris = [10, 11]
+#n_debris = [30, 31]
 #n_debris = [50, 51]
 
 font_set = ['arial-bold']

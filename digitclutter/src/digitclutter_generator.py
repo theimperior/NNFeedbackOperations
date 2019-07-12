@@ -18,10 +18,10 @@ Generates an image set with the same statistics and the light debris data set de
 n_samples = 5000
 # if diskspace is limited increase n_batches 
 # This will create n batches with n samples each
-n_batches = 20
+n_batches = 22
 
 #number of digits present in each image (3, 4, 5)
-digits = 3
+digits = 5
 
 font_set = ['arial-bold']
 

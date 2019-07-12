@@ -68,6 +68,23 @@ function binarycrossentropy(y_hat, y)
 	return sum(c) * 1 // length(y)
 end
 
+# TODO assert both vectors have the same length
+function onematch(y::AbstractVector, targets::AbstractVector)
+	return targets[Base.argmax(y)]
+end
+
+function onekill(y::AbstractVector)
+	y[Base.argmax(y)] = 0 
+	return y
+end
+
+function onematch!(y::AbstractMatrix, targets::AbstractMatrix) 
+	matches = dropdims(mapslices(x -> onematch(x[1:(length(x) ÷ 2)], x[(length(x) ÷ 2 + 1):length(x)]), vcat(y, targets), dims=1), dims=1)
+	y[:, :] = mapslices(x -> onekill(x), y, dims=1)
+	return matches
+end
+onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch(data(y), targets)
+
 function trainReccurentNet(reccurent_model, train_set, test_set)
     function accuracy(data_set)
 		acc = 0
@@ -81,8 +98,41 @@ function trainReccurentNet(reccurent_model, train_set, test_set)
 				Flux.reset!(reccurent_model)
 			end
 			return acc / length(data_set)
+		elseif ( config == "3digits" )
+			for (data, labels) in data_set
+				for i in 1:time_steps-1
+					y_hat = reccurent_model(data)
+				end
+				y_hat = reccurent_model(data)
+				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
+				acc += mean(matches .== 3)
+				Flux.reset!(reccurent_model)
+			end
+			return acc / length(data_set)
+		elseif ( config == "4digits" )
+			for (data, labels) in data_set
+				for i in 1:time_steps-1
+					y_hat = reccurent_model(data)
+				end
+				y_hat = reccurent_model(data)
+				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
+				acc += mean(matches .== 4)
+				Flux.reset!(reccurent_model)
+			end
+			return acc / length(data_set)
+		elseif ( config == "5digits" )
+			for (data, labels) in data_set
+				for i in 1:time_steps-1
+					y_hat = reccurent_model(data)
+				end
+				y_hat = reccurent_model(data)
+				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
+				acc += mean(matches .== 5)
+				Flux.reset!(reccurent_model)
+			end
+			return acc / length(data_set)
 		else
-				# TODO...
+			
         end
     end
 	
@@ -115,8 +165,28 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set)
 				acc += mean(onecold(feedforward_model(data)) .== onecold(labels))
 			end
 			return acc / length(data_set)
+		elseif ( config == "3digits" )
+			for (data, labels) in data_set
+				y_hat = feedforward_model(data)
+				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
+				acc += mean(matches .== 3)
+			end
+			return acc / length(data_set)
+		elseif ( config == "4digits" )
+			for (data, labels) in data_set
+				y_hat = feedforward_model(data)
+				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
+				acc += mean(matches .== 4)
+			end
+			return acc / length(data_set)
+		elseif ( config == "5digits" )
+			for (data, labels) in data_set
+				y_hat = feedforward_model(data)
+				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
+				acc += mean(matches .== 5)
+			end
+			return acc / length(data_set)
 		else
-			# TODO...
 		end
     end
 	
