@@ -88,7 +88,7 @@ function onematch!(y::AbstractMatrix, targets::AbstractMatrix)
 end
 onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(data(y), targets)
 
-function trainReccurentNet(reccurent_model, train_set, test_set)
+function trainReccurentNet(reccurent_model, train_set, test_set, model_cfg::String)
     function accuracy(data_set)
 		acc = 0
 		if( config == "10debris" || config == "30debris" || config == "50debris" )
@@ -154,13 +154,17 @@ function trainReccurentNet(reccurent_model, train_set, test_set)
     for i in 1:epochs
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        if (rem(i, 20) == 0) @printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) end
+        if (rem(i, 20) == 0) 
+			@printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
+			# store intermediate model 
+			BSON.@save "$(model_cfg)_$(config).$(i).bson" reccurent_model
+		end
     end
     return accuracy(test_set)
 end
 
 
-function trainFeedforwardNet(feedforward_model, train_set, test_set)
+function trainFeedforwardNet(feedforward_model, train_set, test_set, model_cfg::String)
     function accuracy(data_set)
 		acc = 0
 		if( config == "10debris" || config == "30debris" || config == "50debris" )
@@ -202,7 +206,11 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set)
     for i in 1:epochs
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        if (rem(i, 20) == 0) @printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) end
+        if (rem(i, 20) == 0) 
+			@printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
+			# store intermediate model 
+			BSON.@save "$(model_cfg)_$(config).$(i).bson" feedforward_model
+		end
     end
     return accuracy(test_set)
 end
@@ -280,27 +288,27 @@ end
 @printf("loaded %d batches of size %d for testing\n", length(test_set), size(test_set[1][1], 4))
 
 @info("Training BModel with $config\n")
-best_acc = trainFeedforwardNet(BModel, train_set, test_set)
+best_acc = trainFeedforwardNet(BModel, train_set, test_set, "BModel")
 BSON.@save "BModel_$config.bson" BModel best_acc
 
 @info("Training BKModel with $config\n")
-best_acc = trainFeedforwardNet(BKModel, train_set, test_set)
+best_acc = trainFeedforwardNet(BKModel, train_set, test_set, "BKModel")
 BSON.@save "BKModel_$config.bson" BKModel best_acc
 
 @info("Training BFModel with $config\n")
-best_acc = trainFeedforwardNet(BFModel, train_set, test_set)
+best_acc = trainFeedforwardNet(BFModel, train_set, test_set, "BFModel")
 BSON.@save "BFModel_$config.bson" BFModel best_acc
 
 @info("Training BLModel with $config\n")
-best_acc = trainReccurentNet(BLModel, train_set, test_set)
+best_acc = trainReccurentNet(BLModel, train_set, test_set, "BLModel")
 BSON.@save "BLModel_$config.bson" BLModel best_acc
 
 @info("Training BTModel with $config\n")
-best_acc = trainReccurentNet(BTModel, train_set, test_set)
+best_acc = trainReccurentNet(BTModel, train_set, test_set, "BTModel")
 BSON.@save "BTModel_$config.bson" BTModel best_acc
 
 @info("Training BLTModel with $config\n")
-best_acc = trainReccurentNet(BLTModel, train_set, test_set)
+best_acc = trainReccurentNet(BLTModel, train_set, test_set, "BLTModel")
 BSON.@save "BLTModel_$config.bson" BLTModel best_acc
 
 end # module nets
