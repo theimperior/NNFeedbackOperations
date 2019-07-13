@@ -17,6 +17,7 @@ BLTNet:the BNet including top down and lateral connections
 using Flux, Statistics
 using Flux: onecold
 using Printf, BSON
+using Dates
 using NNlib
 using FeedbackNets
 include("./dataManager.jl")
@@ -151,7 +152,7 @@ function trainReccurentNet(reccurent_model, train_set, test_set)
     for i in 1:epochs
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        if (rem(i, 20) == 0) @printf("Epoch %d: Accuracy: %f, Loss: %f\n", i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) end
+        if (rem(i, 20) == 0) @printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) end
     end
     return accuracy(test_set)
 end
@@ -199,7 +200,7 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set)
     for i in 1:epochs
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        if (rem(i, 20) == 0) @printf("Epoch %d: Accuracy: %f, Loss: %f\n", i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) end
+        if (rem(i, 20) == 0) @printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) end
     end
     return accuracy(test_set)
 end
