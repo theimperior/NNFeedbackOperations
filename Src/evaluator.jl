@@ -13,14 +13,22 @@ dataset_config = [("10debris", 1), ("30debris", 2), ("50debris", 3), ("3digits",
 model_config = [("BModel", 1), ("BKModel", 2), ("BFModel", 3), ("BLModel", 4), ("BTModel", 5), ("BLTModel", 6)]
 pairwise_tests = [(1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (2, 3), (2, 4), (2, 5), (2, 6), (3, 4), (3, 5), (3, 6), (4, 5), (4, 6), (5, 6)]
 
-""" structure of the data
- model_output
-  _
- |
- | ...tbc
- |_
- 
-""" 
+# TODO assert both vectors have the same length
+function onematch(y::AbstractVector, targets::AbstractVector)
+	return targets[Base.argmax(y)]
+end
+
+function onekill(y::AbstractVector)
+	y[Base.argmax(y)] = 0 
+	return y
+end
+
+function onematch!(y::AbstractMatrix, targets::AbstractMatrix) 
+	matches = dropdims(mapslices(x -> onematch(x[1:(length(x) รท 2)], x[(length(x) รท 2 + 1):length(x)]), vcat(y, targets), dims=1), dims=1)
+	y[:, :] = mapslices(x -> onekill(x), y, dims=1)
+	return matches
+end
+onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(data(y), targets)
 
 # load models (36 total)
 # 6-element Array{Array{String,1},1}:
@@ -93,16 +101,6 @@ get_modeloutput(model::Array{T, 1}, datasets::Array{Array{Tuple{Array{Float32,4}
 @info("retrieving model outputs")
 model_outputs = [get_modeloutput(models[model_cfg[2]], datasets, model_cfg) for model_cfg in model_config]
 
-# generate model outputs
-# BModel_output = [get_FF_modeloutput(BModel[i], datasets[i]) for (cfg, i) in dataset_config]
-# BKModel_output = [get_FF_modeloutput(BKodel[i], datasets[i]) for (cfg, i) in dataset_config]
-# BFModel_output = [get_FF_modeloutput(BFodel[i], datasets[i]) for (cfg, i) in dataset_config]
-# BLModel_output = [get_FB_modeloutput(BLModel[i], datasets[i]) for (cfg, i) in dataset_config]
-# BTModel_output = [get_FB_modeloutput(BTModel[i], datasets[i]) for (cfg, i) in dataset_config]
-# BLTModel_output = [get_FB_modeloutput(BLTModel[i], datasets[i]) for (cfg, i) in dataset_config]
-# Model_output = [BModel_output, BKModel_output, BFModel_output, BLModel_output, BTModel_output, BLTModel_output]
-# model_output = [get_modeloutput(models[m, :], datasets) for (model_cfg, m) in model_config]
-
 function field_calculator(modelA_output, modelB_output, labels, num_targets)
 	matchesA = zeros(size(labels[1,:]))
 	matchesB = zeros(size(labels[1,:]))
@@ -125,14 +123,6 @@ function pairwise_McNemar(modelA_output::Array{Array{Float32, 2}, 1}, modelB_out
 	fields = (0.0f0, 0.0f0, 0.0f0, 0.0f0) # a, b, c, d
 	if( dataset_cfg == "10debris" || dataset_cfg == "30debris" || dataset_cfg == "50debris" )
 		for idx in 1:length(data_set)
-			# Model A correct & Model B correct
-			# a += count(onecold(modelA_output[idx]) .== onecold(data_set[idx][2]) .& onecold(modelB_output[idx]) .== onecold(data_set[idx][2]))
-			# Model A incorrect & Model B correct
-			# b += count(.~(onecold(modelA_output[idx]) .== onecold(data_set[idx][2])) .& onecold(modelB_output[idx]) .== onecold(data_set[idx][2]))
-			# Model A correct & Model B incorrect
-			# c += count(onecold(modelA_output[idx]) .== onecold(data_set[idx][2]) .& .~(onecold(modelB_output[idx]) .== onecold(data_set[idx][2])))
-			# Model A incorrect & Model B incorrect
-			# d += count(.~(onecold(modelA_output[idx]) .== onecold(data_set[idx][2])) .& .~(onecold(modelB_output[idx]) .== onecold(data_set[idx][2])))
 			fields = fields .+ field_calculator(modelA_output[idx], modelB_output[idx], data_set[idx][2], 1)
 		end
 	elseif ( dataset_cfg == "3digits" )
@@ -150,14 +140,6 @@ function pairwise_McNemar(modelA_output::Array{Array{Float32, 2}, 1}, modelB_out
 	end
 	return fields
 end
-
-# load all testdatasets including the no debris dataset
-# 15 McNemar tests for each dataset (6) = 90 tests
-
-# have one array with all test datasets [[(),(),()], [(),(),()], [(),(),()], [(),(),()]]
-# have one array with all modeloutputs for all datasets [[10x10000], [], [], []]
-
-
 
 # run pairwise McNemar tests
 @info("run pairwise McNemar tests")
