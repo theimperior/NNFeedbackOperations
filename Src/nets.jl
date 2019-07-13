@@ -1,3 +1,4 @@
+module nets
 """
 Author: Sebastian Vendt, University of Ulm
 
@@ -25,6 +26,7 @@ using .dataManager: make_batch
 import LinearAlgebra: norm
 norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
 
+export onematch!
 
 ######################
 # PARAMETERS
@@ -84,7 +86,7 @@ function onematch!(y::AbstractMatrix, targets::AbstractMatrix)
 	y[:, :] = mapslices(x -> onekill(x), y, dims=1)
 	return matches
 end
-onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch(data(y), targets)
+onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(data(y), targets)
 
 function trainReccurentNet(reccurent_model, train_set, test_set)
     function accuracy(data_set)
@@ -301,3 +303,4 @@ BSON.@save "BTModel_$config.bson" BTModel best_acc
 best_acc = trainReccurentNet(BLTModel, train_set, test_set)
 BSON.@save "BLTModel_$config.bson" BLTModel best_acc
 
+end # module nets
