@@ -47,8 +47,6 @@ load_model(model_cfg::Tuple{String, Int64}) = return [load_model(model_cfg[1], d
 @info("loading models")
 models = [load_model(model_cfg) for model_cfg in model_config]
 
-
-
 # load datasets
 @info("loading datasets")
 test_set_10debris, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitdebris/testset/mat/", ["5000_10debris1.mat", "5000_10debris2.mat"]..., batch_size=batch_size)
@@ -141,16 +139,33 @@ function pairwise_McNemar(modelA_output::Array{Array{Float32, 2}, 1}, modelB_out
 	return fields
 end
 
-# run pairwise McNemar tests
 @info("run pairwise McNemar tests")
+p_values = []
 for (data_cfg, i) in dataset_config
 	for (modelA, modelB) in pairwise_tests
 		fields = pairwise_McNemar(model_outputs[modelA][i], model_outputs[modelB][i], datasets[i], data_cfg)
 		p_val = (fields[2] - fields[3])^2 / (fields[2] + fields[3])
 		@printf("%s %s <-> %s  X(1, N = %d) = %f\n", data_cfg, model_config[modelA][1], model_config[modelB][1], sum(fields), p_val)
+		push!(p_values, ("$(data_cfg) $(model_config[modelA][1]) <-> $(model_config[modelB][1])", p_val))
 	end
 end
 
+@info("run Benjamini and Hochberg procedure")
+FDR = 0.05f0
+sort!(p_values, by = x -> x[2])
+m = length(p_values)
+
+rank = 1
+max_rank = 0
+for element in p_values
+	if(element[2] <= (rank/m) * FDR) max_rank = rank end
+	rank += 1
+end
+
+@printf("suggesting to accept the following null hypothesises according to Benjamini:\n")
+for idx in (max_rank + 1):length(p_values)
+	@printf("%s X = %f\n", p_values[idx][1], p_values[idx][2])
+end
 
 
 
