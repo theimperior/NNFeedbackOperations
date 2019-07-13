@@ -1,9 +1,12 @@
 include("./dataManager.jl")
+include("./nets.jl")
 using .dataManager: make_batch
+using .nets
 using BSON: @load
 using Flux
 using Flux: onecold
 using CuArrays
+using Printf
 
 const time_steps = 4
 dataset_config = [("10debris", 1), ("30debris", 2), ("50debris", 3), ("3digits", 4), ("4digits", 5), ("5digits", 6)]
@@ -68,44 +71,6 @@ get_modeloutput(model::Array{T, 1}, datasets::Array{Array{Tuple{Tuple{Array{Floa
 #get_modeloutput(models::Array{Array{T,1}, 1}, datasets::Array{Array{Tuple{Tuple{Array{Float32, 2}, Array{Float32, 4}}, 1}, 1}) where T <: Any = 
 #	return [get_modeloutput(models[model_cfg[2]], datasets, model_cfg) for model_cfg in model_config]
 model_outputs = [get_modeloutput(models[model_cfg[2]], datasets, model_cfg) for model_cfg in model_config]
-
-
-
-# easier would be McNemar on modelA, modelB and a dataset and then generate the modeloutput within mcnemar
-# returning the p_value for the pairwise McNemar test between model A and model B for a given dataset 
-function pairwise_McNemar(modelA_output::Array{Array{Float32, 2}, 1}, modelB_output::Array{Array{Float32, 2}, 1}, data_set, dataset_cfg::String)
-	# for digitdebris
-	a = 0
-	b = 0
-	c = 0
-	d = 0
-	if( dataset_cfg == "10debris" || dataset_cfg == "30debris" || dataset_cfg == "50debris" )
-		for idx in 1:length(data_set)
-			a += count(onecold(modelA_output[idx]) .== onecold(data_set[idx][2]) && onecold(modelB_output[idx]) .== onecold(data_set[idx][2]))
-			b += 
-			c += 
-			d += 
-		end
-	elseif ( dataset_cfg == "3digits" )
-		
-	elseif ( dataset_cfg == "4digits" )
-	elseif ( dataset_cfg == "5digits" )
-	end
-	# for digitclutter 3
-	# for digitclutter 4
-	# for digitclutter 5
-end
-
-# load all testdatasets including the no debris dataset
-# 15 McNemar tests for each dataset (6) = 90 tests
-
-# have one array with all test datasets [[(),(),()], [(),(),()], [(),(),()], [(),(),()]]
-# have one array with all modeloutputs for all datasets [[10x10000], [], [], []]
-
-
-
-
-
 # generate model outputs
 # BModel_output = [get_FF_modeloutput(BModel[i], datasets[i]) for (cfg, i) in dataset_config]
 # BKModel_output = [get_FF_modeloutput(BKodel[i], datasets[i]) for (cfg, i) in dataset_config]
@@ -116,11 +81,71 @@ end
 # Model_output = [BModel_output, BKModel_output, BFModel_output, BLModel_output, BTModel_output, BLTModel_output]
 # model_output = [get_modeloutput(models[m, :], datasets) for (model_cfg, m) in model_config]
 
+function field_calculator(modelA_output, modelB_output, labels, num_targets)
+	matchesA = zeros(size(y_hat[1,:]))
+	matchesB = zeros(size(y_hat[1,:]))
+	y_hat = copy(modelA_output)
+	y_hat = copy(modelB_output)
+	for it in 1:num_targets
+		matchesA .+= onematch!(y_hat, labels)
+		matchesB .+= onematch!(y_hat, labels)
+	end
+	
+	a_ = min.(matchesA, matchesB)
+	b_ = matchesB .- a_
+	c_ = matchesA .- b_
+	d_ = num_targets .- max.(matchesA, matchesB)
+	return (sum(a_), sum(b_), sum(c_), sum(d_))
+end
+
+# returning the contingency table values for the pairwise McNemar test between model A and model B for a given dataset 
+function pairwise_McNemar(modelA_output::Array{Array{Float32, 2}, 1}, modelB_output::Array{Array{Float32, 2}, 1}, data_set, dataset_cfg::String)
+	fields = (0, 0, 0, 0) # a, b, c, d
+	if( dataset_cfg == "10debris" || dataset_cfg == "30debris" || dataset_cfg == "50debris" )
+		for idx in 1:length(data_set)
+			# Model A correct & Model B correct
+			# a += count(onecold(modelA_output[idx]) .== onecold(data_set[idx][2]) .& onecold(modelB_output[idx]) .== onecold(data_set[idx][2]))
+			# Model A incorrect & Model B correct
+			# b += count(.~(onecold(modelA_output[idx]) .== onecold(data_set[idx][2])) .& onecold(modelB_output[idx]) .== onecold(data_set[idx][2]))
+			# Model A correct & Model B incorrect
+			# c += count(onecold(modelA_output[idx]) .== onecold(data_set[idx][2]) .& .~(onecold(modelB_output[idx]) .== onecold(data_set[idx][2])))
+			# Model A incorrect & Model B incorrect
+			# d += count(.~(onecold(modelA_output[idx]) .== onecold(data_set[idx][2])) .& .~(onecold(modelB_output[idx]) .== onecold(data_set[idx][2])))
+			fields .+= field_calculator(modelA_output[idx], modelB_output[idx], data_set[idx][2], 1)
+		end
+	elseif ( dataset_cfg == "3digits" )
+		for idx in 1:length(data_set)
+			fields .+= field_calculator(modelA_output[idx], modelB_output[idx], data_set[idx][2], 3)
+		end
+	elseif ( dataset_cfg == "4digits" )
+		for idx in 1:length(data_set)
+			fields .+= field_calculator(modelA_output[idx], modelB_output[idx], data_set[idx][2], 4)
+		end
+	elseif ( dataset_cfg == "5digits" )
+		for idx in 1:length(data_set)
+			fields .+= field_calculator(modelA_output[idx], modelB_output[idx], data_set[idx][2], 5)
+		end
+	end
+	return (a, b, c, d)
+end
+
+# load all testdatasets including the no debris dataset
+# 15 McNemar tests for each dataset (6) = 90 tests
+
+# have one array with all test datasets [[(),(),()], [(),(),()], [(),(),()], [(),(),()]]
+# have one array with all modeloutputs for all datasets [[10x10000], [], [], []]
+
+
 
 # run pairwise McNemar tests
 for (data_cfg, i) in dataset_config
 	for (modelA, modelB) in pairwise_tests
-		a, b, c, d = pairwise_McNemar(Model_output[modelA][i], Model_output[modelB][i], datasets[i] data_cfg)
-		@show("...")
+		fields = pairwise_McNemar(model_outputs[modelA][i], model_outputs[modelB][i], datasets[i], data_cfg)
+		p_val = (fields[2] - fields[3])^2 / (fields[2] + fields[3])
+		@printf("%s %s <-> %s  X(1, N = %d) = %f", data_cfg, model_config[modelA][1], model_config[modelB][1], sum(fields), p_val)
 	end
 end
+
+
+
+
