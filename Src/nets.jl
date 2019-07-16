@@ -154,6 +154,7 @@ function trainReccurentNet(reccurent_model, train_set, test_set, model_cfg::Stri
     for i in 1:epochs
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
+		gc(); CuArrays.clearpool()
         if (rem(i, 20) == 0) 
 			@printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
@@ -206,6 +207,7 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set, model_cfg::
     for i in 1:epochs
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
+		gc(); CuArrays.clearpool()
         if (rem(i, 20) == 0) 
 			@printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
