@@ -73,8 +73,8 @@ function binarycrossentropy(y_hat, y)
 	return sum(c) * 1 // length(y)
 end
 
-# TODO assert both vectors have the same length
 function onematch(y::AbstractVector, targets::AbstractVector)
+	if ( length(y) != length(targets) ) @warn("vectors in onematch(y::AbstractVector, targets::AbstractVector) differ in length, results may be unexpected!") end
 	return targets[Base.argmax(y)]
 end
 
