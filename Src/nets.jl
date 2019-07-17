@@ -42,6 +42,8 @@ const decay_step = 40
 # number of timesteps the network is unrolled
 const time_steps = 4
 const usegpu = true
+
+# TODO make use of unevaluated expressions and rewrite the name generation 
 const config = "10debris" # 30debris, 50debris, 3digits, 4 digits, 5digits
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
 train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
@@ -158,7 +160,7 @@ function trainReccurentNet(reccurent_model, train_set, test_set, model_cfg::Stri
         if (rem(i, 20) == 0) 
 			@printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
-			BSON.@save "$(model_cfg)_$(config).$(i).bson" reccurent_model
+			if (i != epochs) BSON.@save "$(model_cfg)_$(config).$(i).bson" reccurent_model end
 		end
     end
     return accuracy(test_set)
@@ -211,7 +213,7 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set, model_cfg::
         if (rem(i, 20) == 0) 
 			@printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
-			BSON.@save "$(model_cfg)_$(config).$(i).bson" feedforward_model
+			if (i != epochs) BSON.@save "$(model_cfg)_$(config).$(i).bson" feedforward_model end
 		end
     end
     return accuracy(test_set)
