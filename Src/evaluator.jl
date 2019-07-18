@@ -7,6 +7,7 @@ using Flux: onecold
 using CuArrays
 using DataFrames
 using GLM
+using Random
 
 struct dataset
 	name::String
@@ -282,13 +283,67 @@ end
 # construct null distribution
 	# assuming to fit a gaussian 
 	
-#construct null distribution	
-for model_cfg in model_config
-	
+#construct null distributions
+function shuffle!(a::Array{Float32,2}, b::Array{Float32,2}) 
+	perm = bitrand(size(a, 2))
+	tmp_a = similar(a[:, 1])
+	for idx in 1:length(perm)
+		if(perm[idx]) 
+			tmp_a = a[:, idx]
+			a[:, idx] = b[:, idx]
+			b[:, idx] = tmp_a
+		end
+	end
 end
-data = DataFrame(X=[1, 2, 3], Y=Y)
-ols = lm(@formula(Y ~ X), data)
-round.(coef(ols), digits=5)
+
+shuffle!(a::Array{Array{Float32,2},1}, b::Array{Array{Float32,2},1}) = 	
+	for idx in 1:size(a, 1)
+		shuffle!(a[idx], b[idx])
+	end
+reps_null_distro = 10000
+X = [1, 2, 3]
+Y_A = [0, 0, 0]
+Y_B = [0, 0, 0]
+'''
+for model_pair in pairwise_tests
+	# null distribution for digit __debris__
+	
+	# concatenate results so random shuffling will be easier
+	model_outputA = [model_outputs[model_pair.modelA.idx][1], 
+						model_outputs[model_pair.modelA.idx][2], 
+						model_outputs[model_pair.modelA.idx][3]]
+	model_outputB = [model_outputs[model_pair.modelB.idx][1], 
+						model_outputs[model_pair.modelB.idx][2], 
+						model_outputs[model_pair.modelB.idx][3]]
+	diffs = zeros(reps_null_distro)
+	for perm in 1:reps_null_distro
+		model_outputA_perm = copy(model_outputA)
+		model_outputB_perm = copy(model_outputB)
+		# shuffle predictions of single images between model pair for all three datasets
+		for idx in 1:3
+			shuffle!(model_outputA_perm[idx], model_outputB_perm[idx])
+			Y_A[idx] = accuracy(model_outputA_perm, labels) # TODO create function
+			Y_B[idx] = accuracy(model_outputB_perm, labels) # TODO create function
+		end
+		# fit linear models 
+		lmA = lm(@formula(Y ~ X), DataFrame(X=X, Y=Y_A))
+		lmB = lm(@formula(Y ~ X), DataFrame(X=X, Y=Y_B))
+		paramsA = round.(coef(lmA), digits=5)
+		paramsB = round.(coef(lmB), digits=5)
+		
+		diff = paramsA .- paramsB
+		diffs[perm] = diff[1] + diff[2]
+	end
+	# fit a normal distribution to the differences
+	null_dist = fit(Normal, diffs)
+	
+	# TODO calculate real differences
+	# cumulative propability cdf(distribution, value)
+	# p_val = pdf(null_dist, real_diff)
+	# TODO Check weather p_val 
+end
+'''
+
 
 
 
