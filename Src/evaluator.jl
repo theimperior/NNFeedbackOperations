@@ -24,13 +24,13 @@ end
 
 mutable struct hypothesis
 	models::model_pair
-	dataset::Int64
+	dataset::dataset
 	pval::Float64
 	significance::Bool
 	acceptance::Bool
 end
 
-model_config = [model("BModel", 1), model("BKModel", 2), model("BFModel", 3), model("BLModel", 4), model("BTModel", 5), model("BLTModel", 6)]
+model_config = [model("BModel  ", 1), model("BKModel ", 2), model("BFModel ", 3), model("BLModel ", 4), model("BTModel ", 5), model("BLTModel", 6)]
 
 pairwise_tests = [ 
 	model_pair(model_config[1], model_config[2]), model_pair(model_config[1], model_config[3]), model_pair(model_config[1], model_config[4]), model_pair(model_config[1], model_config[5]), model_pair(model_config[1], model_config[6]), 
@@ -70,15 +70,15 @@ function onekill(y::AbstractVector)
 end
 
 function onematch!(y::AbstractMatrix, targets::AbstractMatrix) 
-	matches = dropdims(mapslices(x -> onematch(x[1:(length(x) รท 2)], x[(length(x) รท 2 + 1):length(x)]), vcat(y, targets), dims=1), dims=1)
+	matches = dropdims(mapslices(x -> onematch(x[1:(length(x) ÷ 2)], x[(length(x) ÷ 2 + 1):length(x)]), vcat(y, targets), dims=1), dims=1)
 	y[:, :] = mapslices(x -> onekill(x), y, dims=1)
 	return matches
 end
 onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(data(y), targets)
 
 '''
-function load_model(model_cfg::String, data_cfg::String)
-	return "$(model_cfg)_$(data_cfg).bson"
+function load_model(m::model, d::dataset)
+	return "$(m.name)_$(d.name).bson"
 end
 '''
 function load_model(m::model, d::dataset)
@@ -191,20 +191,22 @@ end
 
 function pairwise_McNemar!(h::hypothesis)
 	# map hypthesis to actual data and run McNemar test
-	(fields, pval, sig) = pairwise_McNemar(model_outputs[hypothesis.models.modelA.idx][hypothesis.data_set.idx], model_outputs[hypothesis.models.modelA.idx][hypothesis.data_set.idx], hypothesis.data_set)
-	hypothesis.p_val = pval
-	hypothesis.significance = sig
+	(fields, pval, sig) = pairwise_McNemar(model_outputs[h.models.modelA.idx][h.dataset.idx], 
+											model_outputs[h.models.modelB.idx][h.dataset.idx], 
+											h.dataset)
+	h.pval = pval
+	h.significance = sig
 end
 
 # controlling the false positives using the Benjamini Hochberg procedure
 # sorting the hypothesises according to their p-value and overwrites the statistical significance field according to Benjamini Hochberg
 function FDR_control!(hypothesises, FDR::AbstractFloat)
-	sort!(hypothesises, by = x -> x.p_val)
+	sort!(hypothesises, by = x -> x.pval)
 	m = length(hypothesises)
 	rank = 1
 	max_rank = 0
 	for h in hypothesises
-		if(h.p_val <= (rank/m) * FDR) max_rank = rank end
+		if(h.pval <= (rank/m) * FDR) max_rank = rank end
 		rank += 1
 	end
 	
@@ -215,42 +217,42 @@ function FDR_control!(hypothesises, FDR::AbstractFloat)
 	end
 end
 
-function print_results(hypothesises::Array{hypothesis, 1}, null_hypothesises::String)
+function print_results(hypothesises::Array{Any, 1}, null_hypothesises::String)
 	# null_hypothesises = copy(hypothesises)
 	# sort hypothesises according to the statistical significance
 	# sort!(null_hypothesises, by = x -> x[3])
 	@printf("null hypothesis: %s \n", null_hypothesises)
-	@printf("Dataset, ModelA, ModelB   |   p-value   |   statistical significance   |   accepting null hyp.\n")
+	@printf("Dataset, ModelA, ModelB   |   p-value   |   statistical significance      |   accepting null hyp.\n")
 	@printf("-------------------------------------------------------------------------------------------------\n")
 	for h in hypothesises
 		if ( h.significance && !h.acceptance ) marker = "<---" 
 		else marker = ""
 		end
-		@printf("%s %s <-> %s  X = %f, statistical significant: %s, accepting null hypothesis: %s  %s\n", h.data_set.name, 
-				h.models.modelA.name, h.models.modelB.name, h.p_val, bool_str[h.significance + 1], bool_str[h.acceptance + 1], marker)
+		@printf("%s %s <-> %s  X = %f, statistical significant: %s, accepting null hypothesis: %s  %s\n", h.dataset.name, 
+				h.models.modelA.name, h.models.modelB.name, h.pval, bool_str[h.significance + 1], bool_str[h.acceptance + 1], marker)
 	end
 	@printf("\n\n\n")
 end
 
 # creating the null hypothesises
 # hypothesises = null hypothesises of model A[1], model B[2] and dataset[3], p-value[2], bool for statistical significance and bool for accepting (true)/rejecting(false) null hypothesis
-hypothesises = [] # typeof(hypothesises) = Array{Tuple{Tuple{Int64,Int64,Int64},Float64,Bool, Bool}, 1}
+nh = [] # null hypothesises
 FDR = 0.05f0
 for dataset in datasets
 	for pairwise_test in pairwise_tests
 		# defaulting to a not statistical significant hypothesis which would be accepted
-		push!(hypothesises, hypothesis(pairwise_test, dataset, 0.0, false, true))
+		push!(nh, hypothesis(pairwise_test, dataset, 0.0, false, true))
 	end
-	@info("run pairwise McNemar tests on Group")
-	for h in hypothesises
+	@info("run pairwise McNemar tests on Group $(dataset.name), FDR at $(FDR)")
+	for h in nh
 		pairwise_McNemar!(h)
 	end
 	@info("controlling false positives at rate 0.05")
-	FDR_control!(hypothesises, FDR)
-	print_results(hypothesises, "statistical significant differences in model accuracy on one dataset")
+	FDR_control!(nh, FDR)
+	print_results(nh, "statistical significant diff in model accuracy on dataset $(dataset.name)")
 	
 	# run all tests in separate groups (divided by the different datasets)
-	hypothesises = []
+	nh = []
 end
 
 
