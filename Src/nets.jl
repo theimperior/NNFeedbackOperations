@@ -42,7 +42,7 @@ const decay_step = 40
 # number of timesteps the network is unrolled
 const time_steps = 4
 const usegpu = true
-const config = "10debris" # 30debris, 50debris, 3digits, 4 digits, 5digits
+const config = "3digits" # 10debris 30debris, 50debris, 3digits, 4 digits, 5digits
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
 train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
 test_folderpath_debris = "../digitclutter/digitdebris/testset/mat/"
@@ -86,7 +86,7 @@ function onematch!(y::AbstractMatrix, targets::AbstractMatrix)
 	y[:, :] = mapslices(x -> onekill(x), y, dims=1)
 	return matches
 end
-onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(data(y), targets)
+onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(Tracker.data(y), targets)
 
 function trainReccurentNet(reccurent_model, train_set, test_set, model_cfg::String)
     function accuracy(data_set)
@@ -154,7 +154,7 @@ function trainReccurentNet(reccurent_model, train_set, test_set, model_cfg::Stri
     for i in 1:epochs
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-		gc(); CuArrays.clearpool()
+		  GC.gc(); # CuArrays.clearpool()
         if (rem(i, 20) == 0) 
 			@printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
@@ -207,7 +207,7 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set, model_cfg::
     for i in 1:epochs
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-		gc(); CuArrays.clearpool()
+		  GC.gc() # CuArrays.clearpool()
         if (rem(i, 20) == 0) 
 			@printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
