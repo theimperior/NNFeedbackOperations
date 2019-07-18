@@ -5,6 +5,8 @@ using Printf
 using Flux
 using Flux: onecold
 using CuArrays
+using DataFrames
+using GLM
 
 struct dataset
 	name::String
@@ -52,7 +54,7 @@ test_set_4digits, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/dig
 test_set_5digits, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitclutter/testset/mat/", ["5000_5digits1.mat", "5000_5digits2.mat"]..., batch_size=batch_size)
 
 datasets = [dataset("10debris", 1, test_set_10debris), 	dataset("30debris", 2, test_set_30debris), 	dataset("50debris", 3, test_set_50debris), 
-			dataset("3digits", 4, test_set_3digits), 	dataset("4digits", 5, test_set_4digits), 	dataset("5digits", 6, test_set_5digits)]
+			dataset("3digits ", 4, test_set_3digits), 	dataset("4digits ", 5, test_set_4digits), 	dataset("5digits ", 6, test_set_5digits)]
 
 
 
@@ -89,12 +91,40 @@ load_model(m::model) = return [load_model(m, d) for d in datasets]
 @info("loading models")
 models = [load_model(m) for m in model_config]
 '''6-element Array{Array{String,1},1}:
- ["BModel_10debris.bson", "BModel_30debris.bson", "BModel_50debris.bson", "BModel_3digits.bson", "BModel_4digits.bson", "BModel_5digits.bson"]
- ["BKModel_10debris.bson", "BKModel_30debris.bson", "BKModel_50debris.bson", "BKModel_3digits.bson", "BKModel_4digits.bson", "BKModel_5digits.bson"]
- ["BFModel_10debris.bson", "BFModel_30debris.bson", "BFModel_50debris.bson", "BFModel_3digits.bson", "BFModel_4digits.bson", "BFModel_5digits.bson"]
- ["BLModel_10debris.bson", "BLModel_30debris.bson", "BLModel_50debris.bson", "BLModel_3digits.bson", "BLModel_4digits.bson", "BLModel_5digits.bson"]
- ["BTModel_10debris.bson", "BTModel_30debris.bson", "BTModel_50debris.bson", "BTModel_3digits.bson", "BTModel_4digits.bson", "BTModel_5digits.bson"]
+ ["BModel  _10debris.bson", "BModel  _30debris.bson", "BModel  _50debris.bson", "BModel  _3digits.bson", "BModel  _4digits.bson", "BModel  _5digits.bson"]
+ ["BKModel _10debris.bson", "BKModel _30debris.bson", "BKModel _50debris.bson", "BKModel _3digits.bson", "BKModel _4digits.bson", "BKModel _5digits.bson"]
+ ["BFModel _10debris.bson", "BFModel _30debris.bson", "BFModel _50debris.bson", "BFModel _3digits.bson", "BFModel _4digits.bson", "BFModel _5digits.bson"]
+ ["BLModel _10debris.bson", "BLModel _30debris.bson", "BLModel _50debris.bson", "BLModel _3digits.bson", "BLModel _4digits.bson", "BLModel _5digits.bson"]
+ ["BTModel _10debris.bson", "BTModel _30debris.bson", "BTModel _50debris.bson", "BTModel _3digits.bson", "BTModel _4digits.bson", "BTModel _5digits.bson"]
  ["BLTModel_10debris.bson", "BLTModel_30debris.bson", "BLTModel_50debris.bson", "BLTModel_3digits.bson", "BLTModel_4digits.bson", "BLTModel_5digits.bson"]
+'''
+
+function print_accs(accs::Array{Array{Float64,1},1})
+	@printf("Final accuracies on testsets for all models and all datasets\n")
+	# model name 8
+	# dataset name 8 
+	@printf("  model   | dataset  |  accuracy / error \n")
+	@printf("------------------------------------------\n")
+	for model_cfg in model_config
+		for dataset in datasets
+			if ( dataset.idx != 3 ) @printf("          | %s | %f / %f\n", dataset.name, accs[model_cfg.idx][dataset.idx], 1 - accs[model_cfg.idx][dataset.idx])
+			else @printf(" %s | %s | %f / %f\n", model_cfg.name, dataset.name, accs[model_cfg.idx][dataset.idx], 1 - accs[model_cfg.idx][dataset.idx])
+			end
+		end
+		@printf("------------------------------------------\n")
+	end
+end
+
+function load_accuracy(m::model, d::dataset)
+	@load "$(m.name)_$(d.name).bson" model acc
+	return acc
+end
+load_accuracy(m::model) = return [load_accuracy(m, d) for d in datasets]
+@info("loading accuracy")
+accs = [load_accuracy(m) for m in model_config]
+print_accs(accs)
+'''
+6-element Array{Array{Float64,1},1}
 '''
 
 # generate model outputs
@@ -115,7 +145,7 @@ function get_FB_modeloutput(m, data::Array{Float32, 4})
 end
 
 # returns an array containing the output of _one_ model and _one_ dataset (e.g. 10debris)
-function get_modeloutput(m::model, set::dataset) # Array{Tuple{Array{Float32, 4}, Array{Float32, 2}}, 1}
+function get_modeloutput(m::model, set::dataset)
 	if ( m.name == "BModel" || m.name  == "BKModel" || m.name  == "BFModel")
 		return [get_FF_modeloutput(models[m.idx][set.idx], data) for (data, labels) in set.data]
 	else 
@@ -124,13 +154,8 @@ function get_modeloutput(m::model, set::dataset) # Array{Tuple{Array{Float32, 4}
 end
 
 # returns an array containing the output of _one_ model of _all_ datasets 
-# Array{Array{Tuple{Array{Float32,4},Array{Float32,2}},1},1}
 get_modeloutput(m::model) =
 	return [get_modeloutput(m, set) for set in datasets]
-
-
-#get_modeloutput(models::Array{Array{T,1}, 1}, datasets::Array{Array{Tuple{Tuple{Array{Float32, 2}, Array{Float32, 4}}, 1}, 1}) where T <: Any = 
-#	return [get_modeloutput(models[model_cfg[2]], datasets, model_cfg) for model_cfg in model_config]
 
 # typeof(model_outputs) = Array{Array{Array{Array{Float64,2},1},1},1}
 # size(model_outputs) = (6,)
@@ -218,9 +243,6 @@ function FDR_control!(hypothesises, FDR::AbstractFloat)
 end
 
 function print_results(hypothesises::Array{Any, 1}, null_hypothesises::String)
-	# null_hypothesises = copy(hypothesises)
-	# sort hypothesises according to the statistical significance
-	# sort!(null_hypothesises, by = x -> x[3])
 	@printf("null hypothesis: %s \n", null_hypothesises)
 	@printf("Dataset, ModelA, ModelB   |   p-value   |   statistical significance      |   accepting null hyp.\n")
 	@printf("-------------------------------------------------------------------------------------------------\n")
@@ -234,7 +256,7 @@ function print_results(hypothesises::Array{Any, 1}, null_hypothesises::String)
 	@printf("\n\n\n")
 end
 
-# creating the null hypothesises
+
 # hypothesises = null hypothesises of model A[1], model B[2] and dataset[3], p-value[2], bool for statistical significance and bool for accepting (true)/rejecting(false) null hypothesis
 nh = [] # null hypothesises
 FDR = 0.05f0
@@ -256,10 +278,17 @@ for dataset in datasets
 end
 
 
-
-
-
-
+# store accuarcy somewhere 
+# construct null distribution
+	# assuming to fit a gaussian 
+	
+#construct null distribution	
+for model_cfg in model_config
+	
+end
+data = DataFrame(X=[1, 2, 3], Y=Y)
+ols = lm(@formula(Y ~ X), data)
+round.(coef(ols), digits=5)
 
 
 
