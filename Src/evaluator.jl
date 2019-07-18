@@ -30,12 +30,14 @@ mutable struct hypothesis
 	acceptance::Bool
 end
 
+model_config = [model("BModel", 1), model("BKModel", 2), model("BFModel", 3), model("BLModel", 4), model("BTModel", 5), model("BLTModel", 6)]
+
 pairwise_tests = [ 
-	model_pair(1, 2), model_pair(1, 3), model_pair(1, 4), model_pair(1, 5), model_pair(1, 6), 
-	model_pair(2, 3), model_pair(2, 4), model_pair(2, 5), model_pair(2, 6), 
-	model_pair(3, 4), model_pair(3, 5), model_pair(3, 6), 
-	model_pair(4, 5), model_pair(4, 6), 
-	model_pair(5, 6)]
+	model_pair(model_config[1], model_config[2]), model_pair(model_config[1], model_config[3]), model_pair(model_config[1], model_config[4]), model_pair(model_config[1], model_config[5]), model_pair(model_config[1], model_config[6]), 
+	model_pair(model_config[2], model_config[3]), model_pair(model_config[2], model_config[4]), model_pair(model_config[2], model_config[5]), model_pair(model_config[2], model_config[6]), 
+	model_pair(model_config[3], model_config[4]), model_pair(model_config[3], model_config[5]), model_pair(model_config[3], model_config[6]), 
+	model_pair(model_config[4], model_config[5]), model_pair(model_config[4], model_config[6]), 
+	model_pair(model_config[5], model_config[6])]
 
 bool_str = ("FALSE", "TRUE")
 const time_steps = 4
@@ -51,7 +53,7 @@ test_set_5digits, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/dig
 
 datasets = [dataset("10debris", 1, test_set_10debris), 	dataset("30debris", 2, test_set_30debris), 	dataset("50debris", 3, test_set_50debris), 
 			dataset("3digits", 4, test_set_3digits), 	dataset("4digits", 5, test_set_4digits), 	dataset("5digits", 6, test_set_5digits)]
-model_config = [model("BModel", 1), model("BKModel", 2), model("BFModel", 3), model("BLModel", 4), model"BTModel", 5), model("BLTModel", 6)]
+
 
 
 
@@ -86,13 +88,20 @@ end
 load_model(m::model) = return [load_model(m, d) for d in datasets]
 @info("loading models")
 models = [load_model(m) for m in model_config]
-
+'''6-element Array{Array{String,1},1}:
+ ["BModel_10debris.bson", "BModel_30debris.bson", "BModel_50debris.bson", "BModel_3digits.bson", "BModel_4digits.bson", "BModel_5digits.bson"]
+ ["BKModel_10debris.bson", "BKModel_30debris.bson", "BKModel_50debris.bson", "BKModel_3digits.bson", "BKModel_4digits.bson", "BKModel_5digits.bson"]
+ ["BFModel_10debris.bson", "BFModel_30debris.bson", "BFModel_50debris.bson", "BFModel_3digits.bson", "BFModel_4digits.bson", "BFModel_5digits.bson"]
+ ["BLModel_10debris.bson", "BLModel_30debris.bson", "BLModel_50debris.bson", "BLModel_3digits.bson", "BLModel_4digits.bson", "BLModel_5digits.bson"]
+ ["BTModel_10debris.bson", "BTModel_30debris.bson", "BTModel_50debris.bson", "BTModel_3digits.bson", "BTModel_4digits.bson", "BTModel_5digits.bson"]
+ ["BLTModel_10debris.bson", "BLTModel_30debris.bson", "BLTModel_50debris.bson", "BLTModel_3digits.bson", "BLTModel_4digits.bson", "BLTModel_5digits.bson"]
+'''
 
 # generate model outputs
 # returns the model output of _one_ model an _one_ batch
 '''
 get_FF_modeloutput(model, data::Array{Float32, 4}) = rand(Float32, 10, 100)
-function get_FB_modeloutput(model, data::Array{Float32, 4}) = rand(Float32, 10, 100)
+get_FB_modeloutput(model, data::Array{Float32, 4}) = rand(Float32, 10, 100)
 '''
 get_FF_modeloutput(m, data::Array{Float32, 4}) = m(data)
 
@@ -106,18 +115,18 @@ function get_FB_modeloutput(m, data::Array{Float32, 4})
 end
 
 # returns an array containing the output of _one_ model and _one_ dataset (e.g. 10debris)
-function get_modeloutput(m, dataset::Array{Tuple{Array{Float32, 4}, Array{Float32, 2}}, 1}, model_cfg::model)
-	if ( model_cfg.name == "BModel" || model_cfg.name  == "BKModel" || model_cfg.name  == "BFModel")
-		return [get_FF_modeloutput(m, data) for (data, labels) in dataset]
+function get_modeloutput(m::model, set::dataset) # Array{Tuple{Array{Float32, 4}, Array{Float32, 2}}, 1}
+	if ( m.name == "BModel" || m.name  == "BKModel" || m.name  == "BFModel")
+		return [get_FF_modeloutput(models[m.idx][set.idx], data) for (data, labels) in set.data]
 	else 
-		return [get_FB_modeloutput(m, data) for (data, labels) in dataset]
+		return [get_FB_modeloutput(models[m.idx][set.idx], data) for (data, labels) in set.data]
 	end
 end
 
 # returns an array containing the output of _one_ model of _all_ datasets 
 # Array{Array{Tuple{Array{Float32,4},Array{Float32,2}},1},1}
-get_modeloutput(m, datasets::Array{dataset, 1}, model_cfg::model) where T <: Any = 
-	return [get_modeloutput(m, datasets.data, model_cfg) for set in datasets]
+get_modeloutput(m::model) =
+	return [get_modeloutput(m, set) for set in datasets]
 
 
 #get_modeloutput(models::Array{Array{T,1}, 1}, datasets::Array{Array{Tuple{Tuple{Array{Float32, 2}, Array{Float32, 4}}, 1}, 1}) where T <: Any = 
@@ -129,7 +138,7 @@ get_modeloutput(m, datasets::Array{dataset, 1}, model_cfg::model) where T <: Any
 # size(model_outputs[1][1]) = (100,)
 # size(model_outputs[1][1][1]) = (10, 100)
 @info("retrieving model outputs")
-model_outputs = [get_modeloutput(models[model_cfg.idx], datasets, model_cfg) for model_cfg in model_config]
+model_outputs = [get_modeloutput(model_cfg) for model_cfg in model_config]
 
 function field_calculator(modelA_output, modelB_output, labels, num_targets)
 	matchesA = zeros(size(labels[1,:]))
