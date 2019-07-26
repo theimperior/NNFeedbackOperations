@@ -154,12 +154,14 @@ function trainReccurentNet(reccurent_model, train_set, test_set, model_cfg::Stri
     
     opt = Momentum(learning_rate, momentum)
     for i in 1:epochs
+		@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
 		  GC.gc(); # CuArrays.clearpool()
         if (rem(i, 20) == 0) 
-			@printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
+			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
+			# TODO check if intermediate model is available and load it! 
 			if (i != epochs) BSON.@save "$(model_cfg)_$(config).$(i).bson" reccurent_model end
 		end
     end
@@ -207,11 +209,12 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set, model_cfg::
     
     opt = Momentum(learning_rate, momentum)
     for i in 1:epochs
+		@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
 		  GC.gc() # CuArrays.clearpool()
         if (rem(i, 20) == 0) 
-			@printf("%s Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
+			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
 			if (i != epochs) BSON.@save "$(model_cfg)_$(config).$(i).bson" feedforward_model end
 		end
