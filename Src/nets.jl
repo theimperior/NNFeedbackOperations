@@ -292,20 +292,20 @@ end
 @printf("loaded %d batches of size %d for testing\n", length(test_set), size(test_set[1][1], 4))
 
 @info("Training BModel with $config\n")
-best_acc = trainFeedforwardNet(BModel, train_set, test_set, "BModel")
-BSON.@save "BModel_$config.bson" BModel best_acc
+#best_acc = trainFeedforwardNet(BModel, train_set, test_set, "BModel")
+#BSON.@save "BModel_$config.bson" BModel best_acc
 
 @info("Training BKModel with $config\n")
-best_acc = trainFeedforwardNet(BKModel, train_set, test_set, "BKModel")
-BSON.@save "BKModel_$config.bson" BKModel best_acc
+#best_acc = trainFeedforwardNet(BKModel, train_set, test_set, "BKModel")
+#BSON.@save "BKModel_$config.bson" BKModel best_acc
 
 @info("Training BFModel with $config\n")
-best_acc = trainFeedforwardNet(BFModel, train_set, test_set, "BFModel")
-BSON.@save "BFModel_$config.bson" BFModel best_acc
+#best_acc = trainFeedforwardNet(BFModel, train_set, test_set, "BFModel")
+#BSON.@save "BFModel_$config.bson" BFModel best_acc
 
 @info("Training BLModel with $config\n")
-best_acc = trainReccurentNet(BLModel, train_set, test_set, "BLModel")
-BSON.@save "BLModel_$config.bson" BLModel best_acc
+#best_acc = trainReccurentNet(BLModel, train_set, test_set, "BLModel")
+#BSON.@save "BLModel_$config.bson" BLModel best_acc
 
 @info("Training BTModel with $config\n")
 best_acc = trainReccurentNet(BTModel, train_set, test_set, "BTModel")
