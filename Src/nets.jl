@@ -1,4 +1,3 @@
-module nets
 """
 Author: Sebastian Vendt, University of Ulm
 
@@ -22,11 +21,11 @@ using Dates
 using NNlib
 using FeedbackNets
 include("./dataManager.jl")
+include("./accuracy.jl")
 using .dataManager: make_batch
+using .accuracy: binarycrossentropy, recur_accuracy, ff_accuracy
 import LinearAlgebra: norm
 norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
-
-export onematch!
 
 ######################
 # PARAMETERS
@@ -64,83 +63,7 @@ function adapt_learnrate(epoch_idx)
     return init_learning_rate * decay_rate^(epoch_idx / decay_step)
 end
 
-function binarycrossentropy(y_hat, y)
-	# splitting the computation of the binary crossentropy into two parts 
-	# writing it in one equation would crash the script...
-	a = -y .* log.(y_hat .+ eps(Float32))
-	b = -(1 .- y) .* log.(1 .- y_hat .+ eps(Float32))
-	c = a .+ b
-	return sum(c) * 1 // length(y)
-end
-
-function onematch(y::AbstractVector, targets::AbstractVector)
-	if ( length(y) != length(targets) ) @warn("vectors in onematch(y::AbstractVector, targets::AbstractVector) differ in length, results may be unexpected!") end
-	return targets[Base.argmax(y)]
-end
-
-function onekill(y::AbstractVector)
-	y[Base.argmax(y)] = 0 
-	return y
-end
-
-function onematch!(y::AbstractMatrix, targets::AbstractMatrix) 
-	matches = dropdims(mapslices(x -> onematch(x[1:(length(x) ÷ 2)], x[(length(x) ÷ 2 + 1):length(x)]), vcat(y, targets), dims=1), dims=1)
-	y[:, :] = mapslices(x -> onekill(x), y, dims=1)
-	return matches
-end
-onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(Tracker.data(y), targets)
-
-function trainReccurentNet(reccurent_model, train_set, test_set, model_cfg::String)
-    function accuracy(data_set)
-		acc = 0
-		if( config == "10debris" || config == "30debris" || config == "50debris" )
-			for (data, labels) in data_set
-				# read the model output 1 times less, discard the output and read out again when calculating the onecold vector
-				for i in 1:time_steps-1
-					y_hat = reccurent_model(data)
-				end
-				acc += mean(onecold(reccurent_model(data)) .== onecold(labels))
-				Flux.reset!(reccurent_model)
-			end
-			return acc / length(data_set)
-		elseif ( config == "3digits" )
-			for (data, labels) in data_set
-				for i in 1:time_steps-1
-					y_hat = reccurent_model(data)
-				end
-				y_hat = reccurent_model(data)
-				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
-				acc += mean(matches .== 3)
-				Flux.reset!(reccurent_model)
-			end
-			return acc / length(data_set)
-		elseif ( config == "4digits" )
-			for (data, labels) in data_set
-				for i in 1:time_steps-1
-					y_hat = reccurent_model(data)
-				end
-				y_hat = reccurent_model(data)
-				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
-				acc += mean(matches .== 4)
-				Flux.reset!(reccurent_model)
-			end
-			return acc / length(data_set)
-		elseif ( config == "5digits" )
-			for (data, labels) in data_set
-				for i in 1:time_steps-1
-					y_hat = reccurent_model(data)
-				end
-				y_hat = reccurent_model(data)
-				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
-				acc += mean(matches .== 5)
-				Flux.reset!(reccurent_model)
-			end
-			return acc / length(data_set)
-		else
-			
-        end
-    end
-	
+function trainReccurentNet(reccurent_model, train_set, test_set, model_name::String)
 	function loss(x, y)
         loss_val = 0.0f0
         for i in 1:time_steps
@@ -154,54 +77,21 @@ function trainReccurentNet(reccurent_model, train_set, test_set, model_cfg::Stri
     
     opt = Momentum(learning_rate, momentum)
     for i in 1:epochs
-		@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
+		@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(reccurent_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-		  GC.gc(); # CuArrays.clearpool()
-        if (rem(i, 20) == 0) 
-			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
+        if (rem(i, 20) == 0)
+			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(reccurent_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
 			# TODO check if intermediate model is available and load it! 
-			if (i != epochs) BSON.@save "$(model_cfg)_$(config).$(i).bson" reccurent_model end
+			if (i != epochs) BSON.@save "$(model_name)_$(config).$(i).bson" reccurent_model end
 		end
     end
-    return accuracy(test_set)
+    return recur_accuracy(reccurent_model, test_set, config)
 end
 
 
-function trainFeedforwardNet(feedforward_model, train_set, test_set, model_cfg::String)
-    function accuracy(data_set)
-		acc = 0
-		if( config == "10debris" || config == "30debris" || config == "50debris" )
-			for (data, labels) in data_set
-				acc += mean(onecold(feedforward_model(data)) .== onecold(labels))
-			end
-			return acc / length(data_set)
-		elseif ( config == "3digits" )
-			for (data, labels) in data_set
-				y_hat = feedforward_model(data)
-				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
-				acc += mean(matches .== 3)
-			end
-			return acc / length(data_set)
-		elseif ( config == "4digits" )
-			for (data, labels) in data_set
-				y_hat = feedforward_model(data)
-				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
-				acc += mean(matches .== 4)
-			end
-			return acc / length(data_set)
-		elseif ( config == "5digits" )
-			for (data, labels) in data_set
-				y_hat = feedforward_model(data)
-				matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
-				acc += mean(matches .== 5)
-			end
-			return acc / length(data_set)
-		else
-		end
-    end
-	
+function trainFeedforwardNet(feedforward_model, train_set, test_set, model_name::String)
 	function loss(x, y)
 		y_hat = feedforward_model(x)
 		return binarycrossentropy(y_hat, y) + lambda * sum(norm, params(feedforward_model))
@@ -209,17 +99,16 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set, model_cfg::
     
     opt = Momentum(learning_rate, momentum)
     for i in 1:epochs
-		@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
+		@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, ff_accuracy(feedforward_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-		  GC.gc() # CuArrays.clearpool()
         if (rem(i, 20) == 0) 
-			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
+			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, ff_accuracy(feedforward_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
-			if (i != epochs) BSON.@save "$(model_cfg)_$(config).$(i).bson" feedforward_model end
+			if (i != epochs) BSON.@save "$(model_name)_$(config).$(i).bson" feedforward_model end
 		end
     end
-    return accuracy(test_set)
+    return ff_accuracy(feedforward_model, test_set, config)
 end
 
 @printf("Constructing models...\n")
@@ -295,20 +184,20 @@ end
 @printf("loaded %d batches of size %d for testing\n", length(test_set), size(test_set[1][1], 4))
 
 @info("Training BModel with $config\n")
-#best_acc = trainFeedforwardNet(BModel, train_set, test_set, "BModel")
-#BSON.@save "BModel_$config.bson" BModel best_acc
+best_acc = trainFeedforwardNet(BModel, train_set, test_set, "BModel")
+BSON.@save "BModel_$config.bson" BModel best_acc
 
 @info("Training BKModel with $config\n")
-#best_acc = trainFeedforwardNet(BKModel, train_set, test_set, "BKModel")
-#BSON.@save "BKModel_$config.bson" BKModel best_acc
+best_acc = trainFeedforwardNet(BKModel, train_set, test_set, "BKModel")
+BSON.@save "BKModel_$config.bson" BKModel best_acc
 
 @info("Training BFModel with $config\n")
-#best_acc = trainFeedforwardNet(BFModel, train_set, test_set, "BFModel")
-#BSON.@save "BFModel_$config.bson" BFModel best_acc
+best_acc = trainFeedforwardNet(BFModel, train_set, test_set, "BFModel")
+BSON.@save "BFModel_$config.bson" BFModel best_acc
 
 @info("Training BLModel with $config\n")
-#best_acc = trainReccurentNet(BLModel, train_set, test_set, "BLModel")
-#BSON.@save "BLModel_$config.bson" BLModel best_acc
+best_acc = trainReccurentNet(BLModel, train_set, test_set, "BLModel")
+BSON.@save "BLModel_$config.bson" BLModel best_acc
 
 @info("Training BTModel with $config\n")
 best_acc = trainReccurentNet(BTModel, train_set, test_set, "BTModel")
@@ -317,5 +206,3 @@ BSON.@save "BTModel_$config.bson" BTModel best_acc
 @info("Training BLTModel with $config\n")
 best_acc = trainReccurentNet(BLTModel, train_set, test_set, "BLTModel")
 BSON.@save "BLTModel_$config.bson" BLTModel best_acc
-
-end # module nets
