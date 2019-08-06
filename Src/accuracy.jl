@@ -29,7 +29,7 @@ end
 
 onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(Tracker.data(y), targets)
 
-function recur_accuracy(reccurent_model, data_set, config::String)
+function recur_accuracy(reccurent_model, data_set, dataset_name::String)
 	acc = 0
 	for (data, labels) in data_set
 		# read the model output 1 times less, discard the output and read out again when calculating the onecold vector
@@ -39,16 +39,16 @@ function recur_accuracy(reccurent_model, data_set, config::String)
 		y_hat = reccurent_model(data)
 		Flux.reset!(reccurent_model)
 		
-		if( config == "10debris" || config == "30debris" || config == "50debris" ) 
+		if( dataset_name == "10debris" || dataset_name == "30debris" || dataset_name == "50debris" ) 
 			acc += mean(onecold(y_hat) .== onecold(labels))
-		elseif ( config == "3digits" )
+		elseif ( dataset_name == "3digits" )
 			# This has been tested and is executed one after the other
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 3)
-		elseif ( config == "4digits" )
+		elseif ( dataset_name == "4digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 4)
-		elseif ( config == "5digits" )
+		elseif ( dataset_name == "5digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 5)
 		end
@@ -56,19 +56,19 @@ function recur_accuracy(reccurent_model, data_set, config::String)
 	return acc / length(data_set)
 end
 
-function ff_accuracy(feedforward_model, data_set, config::String)
+function ff_accuracy(feedforward_model, data_set, dataset_name::String)
 	acc = 0
 	for (data, labels) in data_set
 		y_hat = feedforward_model(data)
-		if( config == "10debris" || config == "30debris" || config == "50debris" )
+		if( dataset_name == "10debris" || dataset_name == "30debris" || dataset_name == "50debris" )
 			acc += mean(onecold(y_hat) .== onecold(labels))
-		elseif ( config == "3digits" )
+		elseif ( dataset_name == "3digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 3)
-		elseif ( config == "4digits" )
+		elseif ( dataset_name == "4digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 4)
-		elseif ( config == "5digits" )
+		elseif ( dataset_name == "5digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 5)
 		end

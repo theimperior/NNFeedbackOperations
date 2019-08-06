@@ -93,7 +93,7 @@ function load_dataset(dataset_name)
 	return (train_set, test_set)
 end
 
-function trainReccurentNet(reccurent_model, train_set, test_set, model_name::String)
+function trainReccurentNet(reccurent_model, train_set, test_set, model_name::String, dataset_name::String)
 	function loss(x, y)
         loss_val = 0.0f0
         for i in 1:time_steps
@@ -106,39 +106,39 @@ function trainReccurentNet(reccurent_model, train_set, test_set, model_name::Str
     end
     
     opt = Momentum(learning_rate, momentum)
-	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), recur_accuracy(reccurent_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
+	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), recur_accuracy(reccurent_model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if (rem(i, printout_interval) == 0)
-			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(reccurent_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
+			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(reccurent_model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
 			# TODO check if intermediate model is available and load it! 
-			if (i != epochs) BSON.@save "$(model_name)_$(config).$(i).bson" reccurent_model end
+			if (i != epochs) BSON.@save "$(model_name)_$(dataset_name).$(i).bson" reccurent_model end
 		end
     end
-    return recur_accuracy(reccurent_model, test_set, config)
+    return recur_accuracy(reccurent_model, test_set, dataset_name)
 end
 
 
-function trainFeedforwardNet(feedforward_model, train_set, test_set, model_name::String)
+function trainFeedforwardNet(feedforward_model, train_set, test_set, model_name::String, dataset_name::String)
 	function loss(x, y)
 		y_hat = feedforward_model(x)
 		return binarycrossentropy(y_hat, y) + lambda * sum(norm, params(feedforward_model))
 	end
     
     opt = Momentum(learning_rate, momentum)
-	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), ff_accuracy(feedforward_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
+	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), ff_accuracy(feedforward_model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if (rem(i, printout_interval) == 0) 
-			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, ff_accuracy(feedforward_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
+			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, ff_accuracy(feedforward_model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
-			if (i != epochs) BSON.@save "$(model_name)_$(config).$(i).bson" feedforward_model end
+			if (i != epochs) BSON.@save "$(model_name)_$(dataset_name).$(i).bson" feedforward_model end
 		end
     end
-    return ff_accuracy(feedforward_model, test_set, config)
+    return ff_accuracy(feedforward_model, test_set, dataset_name)
 end
 
 @printf("Constructing models...\n")
@@ -163,7 +163,7 @@ for (idx, model_name) in enumerate(FFModels)
 	for dataset_name in datasets
 		@printf("Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
-		best_acc = trainFeedforwardNet(Models[idx], train_set, test_set, model_name)
+		best_acc = trainFeedforwardNet(Models[idx], train_set, test_set, model_name, dataset_name)
 		model = Models[idx]
 		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
 	end
@@ -173,7 +173,8 @@ for (idx, model_name) in enumerate(FBModels)
 	for dataset_name in datasets
 		@printf("Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
-		best_acc = trainReccurentNet(Models[idx+3], train_set, test_set, model_name)
+		best_acc = trainReccurentNet(Models[idx+3], train_set, test_set, model_name, dataset_name)
+		model = Models[idx]
 		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
 	end
 end
