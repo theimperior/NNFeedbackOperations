@@ -29,76 +29,47 @@ onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(Tracker.data(y)
 
 function recur_accuracy(reccurent_model, data_set, config::String)
 	acc = 0
-	if( config == "10debris" || config == "30debris" || config == "50debris" )
-		for (data, labels) in data_set
-			# read the model output 1 times less, discard the output and read out again when calculating the onecold vector
-			for i in 1:time_steps-1
-				y_hat = reccurent_model(data)
-			end
-			acc += mean(onecold(reccurent_model(data)) .== onecold(labels))
-			Flux.reset!(reccurent_model)
-		end
-	elseif ( config == "3digits" )
-		for (data, labels) in data_set
-			for i in 1:time_steps-1
-				y_hat = reccurent_model(data)
-			end
+	for (data, labels) in data_set
+		# read the model output 1 times less, discard the output and read out again when calculating the onecold vector
+		for i in 1:time_steps-1
 			y_hat = reccurent_model(data)
+		end
+		y_hat = reccurent_model(data)
+		Flux.reset!(reccurent_model)
+		
+		if( config == "10debris" || config == "30debris" || config == "50debris" ) 
+			acc += mean(onecold(y_hat) .== onecold(labels))
+		elseif ( config == "3digits" )
 			# This has been tested and is executed one after the other
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 3)
-			Flux.reset!(reccurent_model)
-		end
-	elseif ( config == "4digits" )
-		for (data, labels) in data_set
-			for i in 1:time_steps-1
-				y_hat = reccurent_model(data)
-			end
-			y_hat = reccurent_model(data)
+		elseif ( config == "4digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 4)
-			Flux.reset!(reccurent_model)
-		end
-	elseif ( config == "5digits" )
-		for (data, labels) in data_set
-			for i in 1:time_steps-1
-				y_hat = reccurent_model(data)
-			end
-			y_hat = reccurent_model(data)
+		elseif ( config == "5digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 5)
-			Flux.reset!(reccurent_model)
 		end
-	else
 	end
 	return acc / length(data_set)
 end
 
 function ff_accuracy(feedforward_model, data_set, config::String)
 	acc = 0
-	if( config == "10debris" || config == "30debris" || config == "50debris" )
-		for (data, labels) in data_set
-			acc += mean(onecold(feedforward_model(data)) .== onecold(labels))
-		end
-	elseif ( config == "3digits" )
-		for (data, labels) in data_set
-			y_hat = feedforward_model(data)
+	for (data, labels) in data_set
+		y_hat = feedforward_model(data)
+		if( config == "10debris" || config == "30debris" || config == "50debris" )
+			acc += mean(onecold(y_hat) .== onecold(labels))
+		elseif ( config == "3digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 3)
-		end
-	elseif ( config == "4digits" )
-		for (data, labels) in data_set
-			y_hat = feedforward_model(data)
+		elseif ( config == "4digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 4)
-		end
-	elseif ( config == "5digits" )
-		for (data, labels) in data_set
-			y_hat = feedforward_model(data)
+		elseif ( config == "5digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
 			acc += mean(matches .== 5)
 		end
-	else
 	end
 	return acc / length(data_set)
 end
