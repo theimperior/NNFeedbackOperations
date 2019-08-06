@@ -1,6 +1,8 @@
 module accuracy
 
-using Flux
+using Flux, Statistics
+using Flux: onecold
+
 
 function binarycrossentropy(y_hat, y)
 	# splitting the computation of the binary crossentropy into two parts 
@@ -29,7 +31,7 @@ end
 
 onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(Tracker.data(y), targets)
 
-function recur_accuracy(reccurent_model, data_set, dataset_name::String)
+function recur_accuracy(reccurent_model, data_set, time_steps, dataset_name::String)
 	acc = 0
 	for (data, labels) in data_set
 		# read the model output 1 times less, discard the output and read out again when calculating the onecold vector

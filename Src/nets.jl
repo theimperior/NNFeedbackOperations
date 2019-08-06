@@ -106,18 +106,18 @@ function trainReccurentNet(reccurent_model, train_set, test_set, model_name::Str
     end
     
     opt = Momentum(learning_rate, momentum)
-	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), recur_accuracy(reccurent_model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), recur_accuracy(reccurent_model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if (rem(i, printout_interval) == 0)
-			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(reccurent_model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(reccurent_model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
 			# TODO check if intermediate model is available and load it! 
 			if (i != epochs) BSON.@save "$(model_name)_$(dataset_name).$(i).bson" reccurent_model end
 		end
     end
-    return recur_accuracy(reccurent_model, test_set, dataset_name)
+    return recur_accuracy(reccurent_model, test_set, time_steps, dataset_name)
 end
 
 
