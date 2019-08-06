@@ -49,7 +49,7 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     for (i, filename) in enumerate(filenames)
         # load the data from the mat file
         file = "$filepath$filename"
-        @printf("Reading %d of %d from %s\n", i, length(filenames), file)
+        # @printf("Reading %d of %d from %s\n", i, length(filenames), file)
         matfile = matopen(file)
         # size(images) = (N, width, height, 1)
         imagepart = read(matfile, "images")
@@ -71,8 +71,8 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     # rearrange binary targets: targetarray(10) x batchsize(Setsize)
     bin_targets = permutedims(bin_targets, (2, 1))
    
-    @printf("Dimension of images (%d, %d, %d, %d)\n", size(images)...)
-    @printf("Dimension of binary targets (%d, %d)\n", size(bin_targets)...)
+    # @printf("Dimension of images (%d, %d, %d, %d)\n", size(images)...)
+    # @printf("Dimension of binary targets (%d, %d)\n", size(bin_targets)...)
     
     setsize = size(images, 4)
     images = convert(Array{Float64}, images) 
@@ -80,7 +80,7 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     mean_img = mean(images, dims=4)
     std_img = std(images, mean=mean_img, dims=4)
     if(normalize)
-        @printf("normalize dataset\n")
+        # @printf("normalize dataset\n")
         std_img_tmp = std_img
         std_img_tmp[std_img_tmp .== 0] .= 1
         for i in 1:setsize
@@ -105,7 +105,7 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
 	 if ( batch_size == -1 ) 
 	    batch_size = size(images, 4)
 	 end
-    @printf("Creating batches\n")
+    # @printf("Creating batches\n")
     idxsets = partition(1:size(images, 4), batch_size)
     train_set = [make_minibatch(images, bin_targets, i) for i in idxsets];
     

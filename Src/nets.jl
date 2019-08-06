@@ -41,7 +41,10 @@ const decay_step = 40
 # number of timesteps the network is unrolled
 const time_steps = 4
 const usegpu = true
-const config = "3digits" # 10debris 30debris, 50debris, 3digits, 4 digits, 5digits
+const printout_interval = 5
+const datasets = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits"]
+const FFModels = ["BModel", "BKModel", "BFModel"]
+const FBModels = ["BTModel", "BLModel", "BLTModel"]
 
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
 train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
@@ -62,6 +65,34 @@ function adapt_learnrate(epoch_idx)
     return init_learning_rate * decay_rate^(epoch_idx / decay_step)
 end
 
+function load_dataset(dataset_name)
+	# generate filenames 
+	train_filenames = ["5000_$(dataset_name)$(m).mat" for m in 1:20]
+	test_filenames = ["5000_$(dataset_name)$(m).mat" for m in 1:2]
+	if(dataset_name == "10debris" || dataset_name == "30debris" || dataset_name == "50debris")
+		train_folderpath = train_folderpath_debris
+		test_folderpath = test_folderpath_debris
+	elseif(dataset_name == "3digits" || dataset_name == "4digits" || dataset_name == "5digits")
+		train_folderpath = train_folderpath_digits
+		test_folderpath = test_folderpath_digits
+	end
+
+	train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
+	# test_set needs to have the same batchsize as the train_set due to model state init
+	test_set, tmp1, tmp2 = make_batch(test_folderpath, test_filenames..., batch_size=batch_size)
+
+	if usegpu
+		train_set = gpu.(train_set)
+		test_set = gpu.(test_set)
+	end
+	
+	# TODO make use of debug logging for verbose output of the dataset loader
+	# @printf("loaded %d batches of size %d for training\n", length(train_set), size(train_set[1][1], 4))
+	# @printf("loaded %d batches of size %d for testing\n", length(test_set), size(test_set[1][1], 4))
+	
+	return (train_set, test_set)
+end
+
 function trainReccurentNet(reccurent_model, train_set, test_set, model_name::String)
 	function loss(x, y)
         loss_val = 0.0f0
@@ -79,7 +110,7 @@ function trainReccurentNet(reccurent_model, train_set, test_set, model_name::Str
     for i in 1:epochs
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        if (rem(i, 20) == 0)
+        if (rem(i, printout_interval) == 0)
 			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(reccurent_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
 			# TODO check if intermediate model is available and load it! 
@@ -101,7 +132,7 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set, model_name:
     for i in 1:epochs
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        if (rem(i, 20) == 0) 
+        if (rem(i, printout_interval) == 0) 
 			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, ff_accuracy(feedforward_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
 			if (i != epochs) BSON.@save "$(model_name)_$(config).$(i).bson" feedforward_model end
@@ -111,71 +142,37 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set, model_name:
 end
 
 @printf("Constructing models...\n")
-BModel = spoerer_model_b(Float32, inputsize=(32, 32))
-BKModel = spoerer_model_bk(Float32, inputsize=(32, 32))
-BFModel = spoerer_model_bf(Float32, inputsize=(32, 32))
-BLChain = spoerer_model_bl(Float32, inputsize=(32, 32))
-BTChain = spoerer_model_bt(Float32, inputsize=(32, 32))
-BLTChain = spoerer_model_bt(Float32, inputsize=(32, 32))
+Models = [spoerer_model_b(Float32, inputsize=(32, 32)), 
+			spoerer_model_bk(Float32, inputsize=(32, 32)),
+			spoerer_model_bf(Float32, inputsize=(32, 32)),
+			spoerer_model_bt(Float32, inputsize=(32, 32)),
+			spoerer_model_bl(Float32, inputsize=(32, 32)),
+			spoerer_model_blt(Float32, inputsize=(32, 32))]
 
 if usegpu
-    BModel = gpu(BModel)
-	BKModel = gpu(BKModel)
-	BFModel = gpu(BFModel)
-	BLChain = gpu(BLChain)
-	BTChain = gpu(BTChain)
-	BLTChain = gpu(BLTChain)
+	Models = gpu.(Models)
     hidden = Dict(key => gpu(val) for (key, val) in pairs(hidden))
 end
 
 
-BLModel = Flux.Recur(BLChain, hidden)
-BTModel = Flux.Recur(BTChain, hidden)
-BLTModel = Flux.Recur(BLTChain, hidden)
+Models[4] = Flux.Recur(Models[4], hidden)
+Models[5]  = Flux.Recur(Models[5], hidden)
+Models[6]  = Flux.Recur(Models[6], hidden)
 
-# generate filenames 
-train_filenames = ["5000_$(config)$(m).mat" for m in 1:20]
-test_filenames = ["5000_$(config)$(m).mat" for m in 1:2]
-if(config == "10debris" || config == "30debris" || config == "50debris")
-    train_folderpath = train_folderpath_debris
-    test_folderpath = test_folderpath_debris
-elseif(config == "3digits" || config == "4digits" || config == "5digits")
-    train_folderpath = train_folderpath_digits
-    test_folderpath = test_folderpath_digits
+for (idx, model_name) in enumerate(FFModels)
+	for dataset_name in datasets
+		@printf("Training $(model_name) with $(dataset_name)\n")
+		(train_set, test_set) = load_dataset(dataset_name)
+		best_acc = trainFeedforwardNet(Models[idx], train_set, test_set, model_name)
+		BSON.@save "BModel_$config.bson" Models[idx] best_acc
+	end
 end
 
-train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
-# test_set needs to have the same batchsize as the train_set due to model state init
-test_set, tmp1, tmp2 = make_batch(test_folderpath, test_filenames..., batch_size=batch_size)
-
-if usegpu
-    train_set = gpu.(train_set)
-	test_set = gpu.(test_set)
+for (idx, model_name) in enumerate(FBModels)
+	for dataset_name in datasets
+		@printf("Training $(model_name) with $(dataset_name)\n")
+		(train_set, test_set) = load_dataset(dataset_name)
+		best_acc = trainReccurentNet(Models[idx+3], train_set, test_set, model_name)
+		BSON.@save "BModel_$config.bson" Models[idx+3] best_acc
+	end
 end
-
-@printf("loaded %d batches of size %d for training\n", length(train_set), size(train_set[1][1], 4))
-@printf("loaded %d batches of size %d for testing\n", length(test_set), size(test_set[1][1], 4))
-
-@info("Training BModel with $config\n")
-best_acc = trainFeedforwardNet(BModel, train_set, test_set, "BModel")
-BSON.@save "BModel_$config.bson" BModel best_acc
-
-@info("Training BKModel with $config\n")
-best_acc = trainFeedforwardNet(BKModel, train_set, test_set, "BKModel")
-BSON.@save "BKModel_$config.bson" BKModel best_acc
-
-@info("Training BFModel with $config\n")
-best_acc = trainFeedforwardNet(BFModel, train_set, test_set, "BFModel")
-BSON.@save "BFModel_$config.bson" BFModel best_acc
-
-@info("Training BLModel with $config\n")
-best_acc = trainReccurentNet(BLModel, train_set, test_set, "BLModel")
-BSON.@save "BLModel_$config.bson" BLModel best_acc
-
-@printf("Training BTModel with $config\n")
-best_acc = trainReccurentNet(BTModel, train_set, test_set, "BTModel")
-BSON.@save "BTModel_$config.bson" BTModel best_acc
-
-@printf("Training BLTModel with $config\n")
-best_acc = trainReccurentNet(BLTModel, train_set, test_set, "BLTModel")
-BSON.@save "BLTModel_$config.bson" BLTModel best_acc
