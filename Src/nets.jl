@@ -41,7 +41,6 @@ const decay_step = 40
 # number of timesteps the network is unrolled
 const time_steps = 4
 const usegpu = true
-# TODO make use of unevaluated expressions and rewrite the name generation 
 const config = "3digits" # 10debris 30debris, 50debris, 3digits, 4 digits, 5digits
 
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
@@ -76,8 +75,8 @@ function trainReccurentNet(reccurent_model, train_set, test_set, model_name::Str
     end
     
     opt = Momentum(learning_rate, momentum)
+	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), recur_accuracy(reccurent_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
-		@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(reccurent_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if (rem(i, 20) == 0)
@@ -98,8 +97,8 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set, model_name:
 	end
     
     opt = Momentum(learning_rate, momentum)
+	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), ff_accuracy(feedforward_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
-		@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, ff_accuracy(feedforward_model, test_set, config), loss(test_set[1][1], test_set[1][2])) 
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if (rem(i, 20) == 0) 
@@ -134,41 +133,18 @@ BLModel = Flux.Recur(BLChain, hidden)
 BTModel = Flux.Recur(BTChain, hidden)
 BLTModel = Flux.Recur(BLTChain, hidden)
 
-if(config == "10debris")
+# generate filenames 
+train_filenames = ["5000_$(config)$(m).mat" for m in 1:20]
+test_filenames = ["5000_$(config)$(m).mat" for m in 1:2]
+if(config == "10debris" || config == "30debris" || config == "50debris")
     train_folderpath = train_folderpath_debris
-    train_filenames = ["5000_$(k)debris$(m).mat" for k=10, m in 1:20]
     test_folderpath = test_folderpath_debris
-    test_filenames = ["5000_$(k)debris$(m).mat" for k=10, m in 1:2]
-elseif(config == "30debris")
+elseif(config == "3digits" || config == "4digits" || config == "5digits")
     train_folderpath = train_folderpath_debris
-    train_filenames = ["5000_$(k)debris$(m).mat" for k=30, m in 1:20]
     test_folderpath = test_folderpath_debris
-    test_filenames = ["5000_$(k)debris$(m).mat" for k=30, m in 1:2]
-elseif(config == "50debris")
-    train_folderpath = train_folderpath_debris
-    train_filenames = ["5000_$(k)debris$(m).mat" for k=50, m in 1:20]
-    test_folderpath = test_folderpath_debris
-    test_filenames = ["5000_$(k)debris$(m).mat" for k=50, m in 1:2]
-elseif(config == "3digits")
-    train_folderpath = train_folderpath_digits
-    train_filenames = ["5000_$(k)digits$(m).mat" for k=3, m in 1:20]
-    test_folderpath = test_folderpath_digits
-    test_filenames = ["5000_$(k)digits$(m).mat" for k=3, m in 1:2]
-elseif(config == "4digits")
-    train_folderpath = train_folderpath_digits
-    train_filenames = ["5000_$(k)digits$(m).mat" for k=4, m in 1:20]
-    test_folderpath = test_folderpath_digits
-    test_filenames = ["5000_$(k)digits$(m).mat" for k=4, m in 1:2]
-elseif(config == "5digits")
-    train_folderpath = train_folderpath_digits
-    train_filenames = ["5000_$(k)digits$(m).mat" for k=5, m in 1:20]
-    test_folderpath = test_folderpath_digits
-    test_filenames = ["5000_$(k)digits$(m).mat" for k=5, m in 1:2]
 else
     @warn("Ups, somehting in the config went wrong...")
 end
-
-
 
 train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
 # test_set needs to have the same batchsize as the train_set due to model state init

@@ -304,11 +304,11 @@ reps_null_distro = 10000
 X = [1, 2, 3]
 Y_A = [0, 0, 0]
 Y_B = [0, 0, 0]
-'''
+
 for model_pair in pairwise_tests
 	# null distribution for digit __debris__
 	
-	# concatenate results so random shuffling will be easier
+	# collect results (10debris, 30debris, 50debris) so random shuffling will be easier
 	model_outputA = [model_outputs[model_pair.modelA.idx][1], 
 						model_outputs[model_pair.modelA.idx][2], 
 						model_outputs[model_pair.modelA.idx][3]]
@@ -342,7 +342,7 @@ for model_pair in pairwise_tests
 	# p_val = pdf(null_dist, real_diff)
 	# TODO Check weather p_val 
 end
-'''
+
 
 
 
