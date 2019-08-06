@@ -1,21 +1,25 @@
 include("/home/svendt/NNFeedbackOperations/Src/dataManager.jl")
-include("/home/svendt/NNFeedbackOperations/Src/accuarcy.jl")
+include("/home/svendt/NNFeedbackOperations/Src/accuracy.jl")
 using .dataManager: make_batch
-using .accuarcy: onematch!, onematch, onekill
+using .accuracy: onematch!, onematch, onekill
 using BSON: @load
+using BSON
 using Printf
 using Flux
 using Flux: onecold
 using CuArrays
+using CUDAdrv
 using DataFrames
 using GLM
 using Random
 using Distributions
+using FeedbackNets
+using NNlib
 
 struct dataset
 	name::String
 	idx::Int64 # for array indices (e.g. model_outputs)
-	data::Array{Tuple{Array{Float32,4},Array{Float32,2}},1}
+	data #::CuArray{Tuple{CuArray{Float32,4},CuArray{Float32,2}},1}
 end
 
 struct model
@@ -36,7 +40,8 @@ mutable struct hypothesis
 	acceptance::Bool
 end
 
-model_config = [model("BModel  ", 1), model("BKModel ", 2), model("BFModel ", 3), model("BLModel ", 4), model("BTModel ", 5), model("BLTModel", 6)]
+# model_config = [model("BModel  ", 1), model("BKModel ", 2), model("BFModel ", 3), model("BLModel ", 4), model("BTModel ", 5), model("BLTModel", 6)]
+model_config = [model("BModel", 1), model("BKModel", 2), model("BFModel", 3), model("BLModel", 4), model("BTModel", 5), model("BLTModel", 6)]
 
 pairwise_tests = [ 
 	model_pair(model_config[1], model_config[2]), model_pair(model_config[1], model_config[3]), model_pair(model_config[1], model_config[4]), model_pair(model_config[1], model_config[5]), model_pair(model_config[1], model_config[6]), 
@@ -50,7 +55,7 @@ const time_steps = 4
 batch_size = 100
 modelFPprefix = "/home/svendt/NNFeedbackOperations/trainedModels/"
 
-@printf("loading datasets")
+@printf("loading datasets\n")
 test_set_10debris, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitdebris/testset/mat/", ["5000_10debris1.mat", "5000_10debris2.mat"]..., batch_size=batch_size)
 test_set_30debris, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitdebris/testset/mat/", ["5000_30debris1.mat", "5000_30debris2.mat"]..., batch_size=batch_size)
 test_set_50debris, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitdebris/testset/mat/", ["5000_50debris1.mat", "5000_50debris2.mat"]..., batch_size=batch_size)
@@ -58,22 +63,26 @@ test_set_3digits, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/dig
 test_set_4digits, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitclutter/testset/mat/", ["5000_4digits1.mat", "5000_4digits2.mat"]..., batch_size=batch_size)
 test_set_5digits, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitclutter/testset/mat/", ["5000_5digits1.mat", "5000_5digits2.mat"]..., batch_size=batch_size)
 
-datasets = [dataset("10debris", 1, test_set_10debris), 	dataset("30debris", 2, test_set_30debris), 	dataset("50debris", 3, test_set_50debris), 
-			dataset("3digits ", 4, test_set_3digits), 	dataset("4digits ", 5, test_set_4digits), 	dataset("5digits ", 6, test_set_5digits)]
+test_set_10debris = gpu.(test_set_10debris)
+test_set_30debris = gpu.(test_set_30debris)
+test_set_50debris = gpu.(test_set_50debris)
+test_set_3digits = gpu.(test_set_3digits)
+test_set_4digits = gpu.(test_set_4digits)
+test_set_5digits = gpu.(test_set_5digits)
 
-'''
+datasets = [dataset("10debris", 1, test_set_10debris), dataset("30debris", 2, test_set_30debris), dataset("50debris", 3, test_set_50debris), 
+			dataset("3digits", 4, test_set_3digits), dataset("4digits", 5, test_set_4digits), dataset("5digits", 6, test_set_5digits)]
+
 function load_model(m::model, d::dataset)
-	return "$(m.name)_$(d.name).bson"
-end
-'''
-function load_model(m::model, d::dataset)
-	@load "$(modelFPprefix)$(m.name)_$(d.name).bson" model acc
-	return model
+   model_name = filter(x -> !isspace(x), "$(m.name)")
+   dataset_name = filter(x -> !isspace(x), "$(d.name)")
+   path = "$(modelFPprefix)$(model_name)_$(dataset_name).bson"
+	return BSON.load(path)[Symbol("$(model_name)")]
 end
 load_model(m::model) = return [load_model(m, d) for d in datasets]
-@printf("loading models")
+@printf("loading models\n")
 models = [load_model(m) for m in model_config]
-'''
+"""
 6-element Array{Array{String,1},1}:
  ["BModel  _10debris.bson", "BModel  _30debris.bson", "BModel  _50debris.bson", "BModel  _3digits.bson", "BModel  _4digits.bson", "BModel  _5digits.bson"]
  ["BKModel _10debris.bson", "BKModel _30debris.bson", "BKModel _50debris.bson", "BKModel _3digits.bson", "BKModel _4digits.bson", "BKModel _5digits.bson"]
@@ -81,7 +90,7 @@ models = [load_model(m) for m in model_config]
  ["BLModel _10debris.bson", "BLModel _30debris.bson", "BLModel _50debris.bson", "BLModel _3digits.bson", "BLModel _4digits.bson", "BLModel _5digits.bson"]
  ["BTModel _10debris.bson", "BTModel _30debris.bson", "BTModel _50debris.bson", "BTModel _3digits.bson", "BTModel _4digits.bson", "BTModel _5digits.bson"]
  ["BLTModel_10debris.bson", "BLTModel_30debris.bson", "BLTModel_50debris.bson", "BLTModel_3digits.bson", "BLTModel_4digits.bson", "BLTModel_5digits.bson"]
-'''
+"""
 
 function print_accs(accs::Array{Array{Float64,1},1})
 	@printf("Final accuracies on testsets for all models and all datasets\n")
@@ -100,26 +109,20 @@ function print_accs(accs::Array{Array{Float64,1},1})
 end
 
 function load_accuracy(m::model, d::dataset)
-	@load "$(m.name)_$(d.name).bson" model acc
-	return acc
+	path = filter(x -> !isspace(x), "$(modelFPprefix)$(m.name)_$(d.name).bson")
+	@load path best_acc
+	return best_acc
 end
 load_accuracy(m::model) = return [load_accuracy(m, d) for d in datasets]
-@printf("loading accuracy")
+@printf("loading accuracy\n")
 accuracies = [load_accuracy(m) for m in model_config]
-print_accs(accs)
-'''
-6-element Array{Array{Float64,1},1}
-'''
+print_accs(accuracies)
 
 # generate model outputs
 # returns the model output of _one_ model an _one_ batch
-'''
-get_FF_modeloutput(model, data::Array{Float32, 4}) = rand(Float32, 10, 100)
-get_FB_modeloutput(model, data::Array{Float32, 4}) = rand(Float32, 10, 100)
-'''
-get_FF_modeloutput(m, data::Array{Float32, 4}) = m(data)
+get_FF_modeloutput(m, data) = m(data)
 
-function get_FB_modeloutput(m, data::Array{Float32, 4})
+function get_FB_modeloutput(m, data)
 	y_hat = nothing
 	for i in 1:time_steps
 		y_hat = m(data)
@@ -130,7 +133,7 @@ end
 
 # returns an array containing the output of _one_ model and _one_ dataset (e.g. 10debris)
 function get_modeloutput(m::model, set::dataset)
-	if ( m.name == "BModel" || m.name  == "BKModel" || m.name  == "BFModel")
+	if ( m.name == "BModel" || m.name  == "BKModel" || m.name  == "BFModel" )
 		return [get_FF_modeloutput(models[m.idx][set.idx], data) for (data, labels) in set.data]
 	else 
 		return [get_FB_modeloutput(models[m.idx][set.idx], data) for (data, labels) in set.data]
@@ -141,12 +144,12 @@ end
 get_modeloutput(m::model) =
 	return [get_modeloutput(m, set) for set in datasets]
 
-# typeof(model_outputs) = Array{Array{Array{Array{Float64,2},1},1},1}
+# typeof(model_outputs) = Array{Array{Array{Array{Float32,2},1},1},1}
 # size(model_outputs) = (6,)
 # size(model_outputs[1]) = (6,)
 # size(model_outputs[1][1]) = (100,)
 # size(model_outputs[1][1][1]) = (10, 100)
-@printf("retrieving model outputs")
+@printf("retrieving model outputs\n")
 model_outputs = [get_modeloutput(model_cfg) for model_cfg in model_config]
 
 function field_calculator(modelA_output, modelB_output, labels, num_targets)
@@ -249,11 +252,11 @@ for dataset in datasets
 		# defaulting to a not statistical significant hypothesis which would be accepted
 		push!(nh, hypothesis(pairwise_test, dataset, 0.0, false, true))
 	end
-	@printf("run pairwise McNemar tests on Group $(dataset.name), FDR at $(FDR)")
+	@printf("run pairwise McNemar tests on Group $(dataset.name), FDR at $(FDR)\n")
 	for h in nh
 		pairwise_McNemar!(h)
 	end
-	@printf("Controlling false positives at rate $(FDR)")
+	@printf("Controlling false positives at rate $(FDR)\n")
 	FDR_control!(nh, FDR)
 	print_results(nh, "statistical significant diff in model accuracy on dataset $(dataset.name)")
 	
@@ -317,7 +320,7 @@ end
 nh = [] # null hypothesises
 FDR = 0.05f0
 alpha = 0.05f0
-@printf("Comparing Model Robustness")
+@printf("Comparing Model Robustness\n")
 for model_pair in pairwise_tests
 	Y_A = [0, 0, 0, 0, 0, 0]
 	Y_B = [0, 0, 0, 0, 0, 0]
@@ -363,12 +366,7 @@ for model_pair in pairwise_tests
 	end
 	push!(nh, hypothesis(model_pair, datasets[4], p_val, significance, true))
 	
-	@printf("Controlling false positives at rate $(FDR)")
+	@printf("Controlling false positives at rate $(FDR)\n")
 	FDR_control!(nh, FDR)
 	print_results(nh, "statistical significant diff in model robustness")	
 end
-
-
-
-
-

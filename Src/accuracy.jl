@@ -1,5 +1,7 @@
 module accuracy
 
+using Flux
+
 function binarycrossentropy(y_hat, y)
 	# splitting the computation of the binary crossentropy into two parts 
 	# writing it in one equation would crash the script...
@@ -20,7 +22,7 @@ function onematch(y::AbstractVector, targets::AbstractVector)
 end
 
 function onematch!(y::AbstractMatrix, targets::AbstractMatrix) 
-	matches = dropdims(mapslices(x -> onematch(x[1:(length(x) รท 2)], x[(length(x) รท 2 + 1):length(x)]), vcat(y, targets), dims=1), dims=1)
+	matches = dropdims(mapslices(x -> onematch(x[1:(length(x) ÷ 2)], x[(length(x) ÷ 2 + 1):length(x)]), vcat(y, targets), dims=1), dims=1)
 	y[:, :] = mapslices(x -> onekill(x), y, dims=1)
 	return matches
 end

@@ -102,7 +102,9 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     # display one sample of the images depends on PyPlot!
     # matshow(dropdims(images[:,:,:,10], dims=3), cmap=PyPlot.cm.gray, vmin=0, vmax=255)
 	
-	if ( batch_size == -1 ) batch_size = size(images, 4)
+	 if ( batch_size == -1 ) 
+	    batch_size = size(images, 4)
+	 end
     @printf("Creating batches\n")
     idxsets = partition(1:size(images, 4), batch_size)
     train_set = [make_minibatch(images, bin_targets, i) for i in idxsets];
