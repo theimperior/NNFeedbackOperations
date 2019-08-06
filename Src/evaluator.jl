@@ -48,6 +48,7 @@ pairwise_tests = [
 bool_str = ("FALSE", "TRUE")
 const time_steps = 4
 batch_size = 100
+modelFPprefix = "/home/svendt/NNFeedbackOperations/trainedModels/"
 
 @printf("loading datasets")
 test_set_10debris, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitdebris/testset/mat/", ["5000_10debris1.mat", "5000_10debris2.mat"]..., batch_size=batch_size)
@@ -66,7 +67,7 @@ function load_model(m::model, d::dataset)
 end
 '''
 function load_model(m::model, d::dataset)
-	@load "$(m.name)_$(d.name).bson" model acc
+	@load "$(modelFPprefix)$(m.name)_$(d.name).bson" model acc
 	return model
 end
 load_model(m::model) = return [load_model(m, d) for d in datasets]
