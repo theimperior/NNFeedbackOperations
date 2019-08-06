@@ -42,9 +42,10 @@ const decay_step = 40
 const time_steps = 4
 const usegpu = true
 const printout_interval = 5
+# enter the datasets and models you want to train
 const datasets = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits"]
-const FFModels = ["BModel", "BKModel", "BFModel"]
-const FBModels = ["BTModel", "BLModel", "BLTModel"]
+const FFModels = [] # ["BModel", "BKModel", "BFModel"]
+const FBModels = ["BLTModel"] # ["BTModel", "BLModel", "BLTModel"]
 
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
 train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
