@@ -10,9 +10,8 @@ BLNet: the BNet including lateral connections within the hidden layers
 BTNet: the BNet including top down connections from the second hidden layer to the first
 BLTNet:the BNet including top down and lateral connections 
 
-
-
 """
+
 using Flux, Statistics
 using Flux: onecold
 using Printf, BSON
