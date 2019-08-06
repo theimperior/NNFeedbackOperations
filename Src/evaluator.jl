@@ -252,11 +252,11 @@ for dataset in datasets
 		# defaulting to a not statistical significant hypothesis which would be accepted
 		push!(nh, hypothesis(pairwise_test, dataset, 0.0, false, true))
 	end
-	@printf("run pairwise McNemar tests on Group $(dataset.name), FDR at $(FDR)\n")
+	@printf("run pairwise McNemar tests on Group %s, FDR at %f\n", dataset.name, FDR)
 	for h in nh
 		pairwise_McNemar!(h)
 	end
-	@printf("Controlling false positives at rate $(FDR)\n")
+	@printf("Controlling false positives at rate %f\n", FDR)
 	FDR_control!(nh, FDR)
 	print_results(nh, "statistical significant diff in model accuracy on dataset $(dataset.name)")
 	
@@ -366,7 +366,7 @@ for model_pair in pairwise_tests
 	end
 	push!(nh, hypothesis(model_pair, datasets[4], p_val, significance, true))
 	
-	@printf("Controlling false positives at rate $(FDR)\n")
+	@printf("Controlling false positives at rate %f\n", FDR)
 	FDR_control!(nh, FDR)
 	print_results(nh, "statistical significant diff in model robustness")	
 end

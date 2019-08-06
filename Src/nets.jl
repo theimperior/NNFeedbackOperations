@@ -161,7 +161,7 @@ Models[6]  = Flux.Recur(Models[6], hidden)
 
 for (idx, model_name) in enumerate(FFModels)
 	for dataset_name in datasets
-		@printf("Training $(model_name) with $(dataset_name)\n")
+		@printf("Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
 		best_acc = trainFeedforwardNet(Models[idx], train_set, test_set, model_name)
 		BSON.@save "BModel_$config.bson" Models[idx] best_acc
@@ -170,7 +170,7 @@ end
 
 for (idx, model_name) in enumerate(FBModels)
 	for dataset_name in datasets
-		@printf("Training $(model_name) with $(dataset_name)\n")
+		@printf("Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
 		best_acc = trainReccurentNet(Models[idx+3], train_set, test_set, model_name)
 		BSON.@save "BModel_$config.bson" Models[idx+3] best_acc
