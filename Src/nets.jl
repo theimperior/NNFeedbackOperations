@@ -10,10 +10,9 @@ BLNet: the BNet including lateral connections within the hidden layers
 BTNet: the BNet including top down connections from the second hidden layer to the first
 BLTNet:the BNet including top down and lateral connections 
 
-"""
-# dependencies
-# pkg> add Flux, BSON, NNlib, MAT, PyPlot
 
+
+"""
 using Flux, Statistics
 using Flux: onecold
 using Printf, BSON
@@ -114,9 +113,9 @@ end
 BModel = spoerer_model_b(Float32, inputsize=(32, 32))
 BKModel = spoerer_model_bk(Float32, inputsize=(32, 32))
 BFModel = spoerer_model_bf(Float32, inputsize=(32, 32))
-BLChain = spoerer_model_bl(Float32, inputsize=(32, 32), kernel=(3, 3), features=32)
-BTChain = spoerer_model_bt(Float32, inputsize=(32, 32), kernel=(3, 3), features=32)
-BLTChain = spoerer_model_bt(Float32, inputsize=(32, 32), kernel=(3, 3), features=32)
+BLChain = spoerer_model_bl(Float32, inputsize=(32, 32))
+BTChain = spoerer_model_bt(Float32, inputsize=(32, 32))
+BLTChain = spoerer_model_bt(Float32, inputsize=(32, 32))
 
 if usegpu
     BModel = gpu(BModel)
@@ -142,8 +141,6 @@ if(config == "10debris" || config == "30debris" || config == "50debris")
 elseif(config == "3digits" || config == "4digits" || config == "5digits")
     train_folderpath = train_folderpath_digits
     test_folderpath = test_folderpath_digits
-else
-    @printf("Ups, somehting in the config went wrong...")
 end
 
 train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
@@ -154,7 +151,6 @@ if usegpu
     train_set = gpu.(train_set)
 	test_set = gpu.(test_set)
 end
-
 
 @printf("loaded %d batches of size %d for training\n", length(train_set), size(train_set[1][1], 4))
 @printf("loaded %d batches of size %d for testing\n", length(test_set), size(test_set[1][1], 4))
