@@ -1,4 +1,3 @@
-module nets
 """
 Author: Sebastian Vendt, University of Ulm
 
@@ -26,7 +25,6 @@ using .dataManager: make_batch
 import LinearAlgebra: norm
 norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
 
-export onematch!
 
 ######################
 # PARAMETERS
@@ -43,7 +41,7 @@ const decay_step = 40
 const time_steps = 4
 const usegpu = true
 # TODO make use of unevaluated expressions and rewrite the name generation 
-const config = "3digits" # 10debris 30debris, 50debris, 3digits, 4 digits, 5digits
+const config = "5digits" # 10debris 30debris, 50debris, 3digits, 4 digits, 5digits
 
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
 train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
@@ -157,7 +155,6 @@ function trainReccurentNet(reccurent_model, train_set, test_set, model_cfg::Stri
 		@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
         Flux.train!(loss, params(reccurent_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-		  GC.gc(); # CuArrays.clearpool()
         if (rem(i, 20) == 0) 
 			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
@@ -212,7 +209,6 @@ function trainFeedforwardNet(feedforward_model, train_set, test_set, model_cfg::
 		@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
         Flux.train!(loss, params(feedforward_model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-		  GC.gc() # CuArrays.clearpool()
         if (rem(i, 20) == 0) 
 			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, accuracy(test_set), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
@@ -295,20 +291,20 @@ end
 @printf("loaded %d batches of size %d for testing\n", length(test_set), size(test_set[1][1], 4))
 
 @info("Training BModel with $config\n")
-#best_acc = trainFeedforwardNet(BModel, train_set, test_set, "BModel")
-#BSON.@save "BModel_$config.bson" BModel best_acc
+best_acc = trainFeedforwardNet(BModel, train_set, test_set, "BModel")
+BSON.@save "BModel_$config.bson" BModel best_acc
 
 @info("Training BKModel with $config\n")
-#best_acc = trainFeedforwardNet(BKModel, train_set, test_set, "BKModel")
-#BSON.@save "BKModel_$config.bson" BKModel best_acc
+best_acc = trainFeedforwardNet(BKModel, train_set, test_set, "BKModel")
+BSON.@save "BKModel_$config.bson" BKModel best_acc
 
 @info("Training BFModel with $config\n")
-#best_acc = trainFeedforwardNet(BFModel, train_set, test_set, "BFModel")
-#BSON.@save "BFModel_$config.bson" BFModel best_acc
+best_acc = trainFeedforwardNet(BFModel, train_set, test_set, "BFModel")
+BSON.@save "BFModel_$config.bson" BFModel best_acc
 
 @info("Training BLModel with $config\n")
-#best_acc = trainReccurentNet(BLModel, train_set, test_set, "BLModel")
-#BSON.@save "BLModel_$config.bson" BLModel best_acc
+best_acc = trainReccurentNet(BLModel, train_set, test_set, "BLModel")
+BSON.@save "BLModel_$config.bson" BLModel best_acc
 
 @info("Training BTModel with $config\n")
 best_acc = trainReccurentNet(BTModel, train_set, test_set, "BTModel")
@@ -318,4 +314,3 @@ BSON.@save "BTModel_$config.bson" BTModel best_acc
 best_acc = trainReccurentNet(BLTModel, train_set, test_set, "BLTModel")
 BSON.@save "BLTModel_$config.bson" BLTModel best_acc
 
-end # module nets
