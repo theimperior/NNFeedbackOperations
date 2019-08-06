@@ -1,5 +1,7 @@
 include("/home/svendt/NNFeedbackOperations/Src/dataManager.jl")
+include("/home/svendt/NNFeedbackOperations/Src/accuarcy.jl")
 using .dataManager: make_batch
+using .accuarcy: onematch!, onematch, onekill
 using BSON: @load
 using Printf
 using Flux
@@ -8,6 +10,7 @@ using CuArrays
 using DataFrames
 using GLM
 using Random
+using Distributions
 
 struct dataset
 	name::String
@@ -46,7 +49,7 @@ bool_str = ("FALSE", "TRUE")
 const time_steps = 4
 batch_size = 100
 
-@info("loading datasets")
+@printf("loading datasets")
 test_set_10debris, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitdebris/testset/mat/", ["5000_10debris1.mat", "5000_10debris2.mat"]..., batch_size=batch_size)
 test_set_30debris, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitdebris/testset/mat/", ["5000_30debris1.mat", "5000_30debris2.mat"]..., batch_size=batch_size)
 test_set_50debris, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/digitclutter/digitdebris/testset/mat/", ["5000_50debris1.mat", "5000_50debris2.mat"]..., batch_size=batch_size)
@@ -56,28 +59,6 @@ test_set_5digits, tmp1, tmp2 = make_batch("/home/svendt/NNFeedbackOperations/dig
 
 datasets = [dataset("10debris", 1, test_set_10debris), 	dataset("30debris", 2, test_set_30debris), 	dataset("50debris", 3, test_set_50debris), 
 			dataset("3digits ", 4, test_set_3digits), 	dataset("4digits ", 5, test_set_4digits), 	dataset("5digits ", 6, test_set_5digits)]
-
-
-
-
-
-# TODO move duplicate functions (-> with nets.jl) into separate module
-function onematch(y::AbstractVector, targets::AbstractVector)
-	if ( length(y) != length(targets) ) @warn("vectors in onematch(y::AbstractVector, targets::AbstractVector) differ in length, results may be unexpected!") end
-	return targets[Base.argmax(y)]
-end
-
-function onekill(y::AbstractVector)
-	y[Base.argmax(y)] = 0 
-	return y
-end
-
-function onematch!(y::AbstractMatrix, targets::AbstractMatrix) 
-	matches = dropdims(mapslices(x -> onematch(x[1:(length(x) ÷ 2)], x[(length(x) ÷ 2 + 1):length(x)]), vcat(y, targets), dims=1), dims=1)
-	y[:, :] = mapslices(x -> onekill(x), y, dims=1)
-	return matches
-end
-onematch!(y::TrackedMatrix, targets::AbstractMatrix) = onematch!(data(y), targets)
 
 '''
 function load_model(m::model, d::dataset)
@@ -89,9 +70,10 @@ function load_model(m::model, d::dataset)
 	return model
 end
 load_model(m::model) = return [load_model(m, d) for d in datasets]
-@info("loading models")
+@printf("loading models")
 models = [load_model(m) for m in model_config]
-'''6-element Array{Array{String,1},1}:
+'''
+6-element Array{Array{String,1},1}:
  ["BModel  _10debris.bson", "BModel  _30debris.bson", "BModel  _50debris.bson", "BModel  _3digits.bson", "BModel  _4digits.bson", "BModel  _5digits.bson"]
  ["BKModel _10debris.bson", "BKModel _30debris.bson", "BKModel _50debris.bson", "BKModel _3digits.bson", "BKModel _4digits.bson", "BKModel _5digits.bson"]
  ["BFModel _10debris.bson", "BFModel _30debris.bson", "BFModel _50debris.bson", "BFModel _3digits.bson", "BFModel _4digits.bson", "BFModel _5digits.bson"]
@@ -121,8 +103,8 @@ function load_accuracy(m::model, d::dataset)
 	return acc
 end
 load_accuracy(m::model) = return [load_accuracy(m, d) for d in datasets]
-@info("loading accuracy")
-accs = [load_accuracy(m) for m in model_config]
+@printf("loading accuracy")
+accuracies = [load_accuracy(m) for m in model_config]
 print_accs(accs)
 '''
 6-element Array{Array{Float64,1},1}
@@ -163,7 +145,7 @@ get_modeloutput(m::model) =
 # size(model_outputs[1]) = (6,)
 # size(model_outputs[1][1]) = (100,)
 # size(model_outputs[1][1][1]) = (10, 100)
-@info("retrieving model outputs")
+@printf("retrieving model outputs")
 model_outputs = [get_modeloutput(model_cfg) for model_cfg in model_config]
 
 function field_calculator(modelA_output, modelB_output, labels, num_targets)
@@ -225,7 +207,7 @@ function pairwise_McNemar!(h::hypothesis)
 end
 
 # controlling the false positives using the Benjamini Hochberg procedure
-# sorting the hypothesises according to their p-value and overwrites the statistical significance field according to Benjamini Hochberg
+# sorting the hypothesises according to their p-value and modifies the acceptance field according to Benjamini Hochberg
 function FDR_control!(hypothesises, FDR::AbstractFloat)
 	sort!(hypothesises, by = x -> x.pval)
 	m = length(hypothesises)
@@ -266,11 +248,11 @@ for dataset in datasets
 		# defaulting to a not statistical significant hypothesis which would be accepted
 		push!(nh, hypothesis(pairwise_test, dataset, 0.0, false, true))
 	end
-	@info("run pairwise McNemar tests on Group $(dataset.name), FDR at $(FDR)")
+	@printf("run pairwise McNemar tests on Group $(dataset.name), FDR at $(FDR)")
 	for h in nh
 		pairwise_McNemar!(h)
 	end
-	@info("controlling false positives at rate 0.05")
+	@printf("Controlling false positives at rate $(FDR)")
 	FDR_control!(nh, FDR)
 	print_results(nh, "statistical significant diff in model accuracy on dataset $(dataset.name)")
 	
@@ -281,7 +263,7 @@ end
 
 # store accuarcy somewhere 
 # construct null distribution
-	# assuming to fit a gaussian 
+# assuming to fit a gaussian 
 	
 #construct null distributions
 function shuffle!(a::Array{Float32,2}, b::Array{Float32,2}) 
@@ -296,53 +278,95 @@ function shuffle!(a::Array{Float32,2}, b::Array{Float32,2})
 	end
 end
 
-shuffle!(a::Array{Array{Float32,2},1}, b::Array{Array{Float32,2},1}) = 	
+function shuffle!(a::Array{Array{Float32,2},1}, b::Array{Array{Float32,2},1})
 	for idx in 1:size(a, 1)
 		shuffle!(a[idx], b[idx])
 	end
+end
+
 reps_null_distro = 10000
-X = [1, 2, 3]
-Y_A = [0, 0, 0]
-Y_B = [0, 0, 0]
-'''
-for model_pair in pairwise_tests
-	# null distribution for digit __debris__
-	
-	# concatenate results so random shuffling will be easier
-	model_outputA = [model_outputs[model_pair.modelA.idx][1], 
-						model_outputs[model_pair.modelA.idx][2], 
-						model_outputs[model_pair.modelA.idx][3]]
-	model_outputB = [model_outputs[model_pair.modelB.idx][1], 
-						model_outputs[model_pair.modelB.idx][2], 
-						model_outputs[model_pair.modelB.idx][3]]
-	diffs = zeros(reps_null_distro)
-	for perm in 1:reps_null_distro
-		model_outputA_perm = copy(model_outputA)
-		model_outputB_perm = copy(model_outputB)
-		# shuffle predictions of single images between model pair for all three datasets
-		for idx in 1:3
-			shuffle!(model_outputA_perm[idx], model_outputB_perm[idx])
-			Y_A[idx] = accuracy(model_outputA_perm, labels) # TODO create function
-			Y_B[idx] = accuracy(model_outputB_perm, labels) # TODO create function
+
+function fit_lin_model(X, Y)
+	lm(@formula(Y ~ X), DataFrame(X=X, Y=Y))
+	return round.(coef(lmA), digits=5)
+end
+
+function shuffled_accuracy!(shuffled_model_output, data_set::dataset, model::model)
+	acc = 0
+	for (idx, (data, labels)) in enumerate(data_set.data)
+		if( data_set.name == "10debris" || data_set.name == "30debris" || data_set.name == "50debris" ) 
+			acc += mean(onecold(shuffled_model_output[idx]) .== onecold(labels))
+		elseif ( data_set.name == "3digits" )
+			matches = onematch!(shuffled_model_output[idx], labels) .+ onematch!(shuffled_model_output[idx], labels) 
+						.+ onematch!(shuffled_model_output[idx], labels)
+			acc += mean(matches .== 3)
+		elseif ( data_set.name == "4digits" )
+			matches = onematch!(shuffled_model_output[idx], labels) .+ onematch!(shuffled_model_output[idx], labels) 
+						.+ onematch!(shuffled_model_output[idx], labels) .+ onematch!(shuffled_model_output[idx], labels)
+			acc += mean(matches .== 4)
+		elseif ( data_set.name == "5digits" )
+			matches = onematch!(shuffled_model_output[idx], labels) .+ onematch!(shuffled_model_output[idx], labels) 
+						.+ onematch!(y_hat, labels) .+ onematch!(shuffled_model_output[idx], labels) .+ onematch!(shuffled_model_output[idx], labels)
+			acc += mean(matches .== 5)
 		end
-		# fit linear models 
-		lmA = lm(@formula(Y ~ X), DataFrame(X=X, Y=Y_A))
-		lmB = lm(@formula(Y ~ X), DataFrame(X=X, Y=Y_B))
-		paramsA = round.(coef(lmA), digits=5)
-		paramsB = round.(coef(lmB), digits=5)
-		
-		diff = paramsA .- paramsB
-		diffs[perm] = diff[1] + diff[2]
+	end
+	return acc / length(data_set.data)
+end
+
+nh = [] # null hypothesises
+FDR = 0.05f0
+alpha = 0.05f0
+@printf("Comparing Model Robustness")
+for model_pair in pairwise_tests
+	Y_A = [0, 0, 0, 0, 0, 0]
+	Y_B = [0, 0, 0, 0, 0, 0]
+	# null distributions for digitdebris and digitclutter
+	diffs = zeros(reps_null_distro, 2)
+	model_outputA_perm = similar(model_outputs[1][1])
+	model_outputB_perm = similar(model_outputs[1][1])
+	for perm in 1:reps_null_distro
+		for idx in 1:6
+			model_outputA_perm = copy(model_outputs[model_pair.modelA.idx][idx])
+			model_outputB_perm = copy(model_outputs[model_pair.modelB.idx][idx])
+			# shuffle predictions of single images between model pair 
+			shuffle!(model_outputA_perm, model_outputB_perm)
+			Y_A[idx] = shuffled_accuracy!(model_outputA_perm, datasets[idx])
+			Y_B[idx] = shuffled_accuracy!(model_outputB_perm, datasets[idx])
+		end
+		# fit linear model for both types of datasets
+		diffs[perm, 1] = sum(fit_lin_model([1, 2, 3], Y_A[1:3]) .- fit_lin_model([1, 2, 3], Y_B[1:3]))
+		diffs[perm, 2] = sum(fit_lin_model([1, 2, 3], Y_A[4:6]) .- fit_lin_model([1, 2, 3], Y_B[4:6]))
 	end
 	# fit a normal distribution to the differences
-	null_dist = fit(Normal, diffs)
+	null_dist_debris = fit(Normal, diffs[:, 1])
+	null_dist_clutter = fit(Normal, diffs[:, 2])
 	
-	# TODO calculate real differences
-	# cumulative propability cdf(distribution, value)
-	# p_val = pdf(null_dist, real_diff)
-	# TODO Check weather p_val 
+	# calculate real differences
+	Y_A = [accuracies[model_pair.modelA.idx]]
+	Y_B = [accuracies[model_pair.modelB.idx]]
+	slope_diff_debris = sum(fit_lin_model([1, 2, 3], Y_A[1:3]) .- fit_lin_model([1, 2, 3], Y_B[1:3]))
+	slope_diff_clutter = sum(fit_lin_model([1, 2, 3], Y_A[4:6]) .- fit_lin_model([1, 2, 3], Y_B[4:6]))
+	
+	# test for statistical significance
+	p_val = cdf(null_dist_debris, slope_diff_debris)
+	significance = false
+	if ( p_val < alpha // 2 || (1 - p_val) < alpha // 2) 
+		significance = true 
+	end
+	push!(nh, hypothesis(model_pair, datasets[1], p_val, significance, true))
+	
+	p_val = cdf(null_dist_clutter, slope_diff_clutter)
+	significance = false
+	if ( p_val < alpha // 2 || (1 - p_val) < alpha // 2) 
+		significance = true 
+	end
+	push!(nh, hypothesis(model_pair, datasets[4], p_val, significance, true))
+	
+	@printf("Controlling false positives at rate $(FDR)")
+	FDR_control!(nh, FDR)
+	print_results(nh, "statistical significant diff in model robustness")	
 end
-'''
+
 
 
 

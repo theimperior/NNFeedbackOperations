@@ -4,21 +4,17 @@ using MAT
 using Base.Iterators: repeated, partition
 using Statistics
 using Printf
+"""
+	make_minibatch(X, Y, idxset)
+	
+loads and bundles training data and labels into batches 
+X should be of size Width x Height x 1 x batchsize
+Y should be of size 10 x batchsize (encoded as binary targets)
+X_batch is 32 x 32 x 1 x batchsize
+Y_batch is 10 x batchsize
 
-# export make_batch
-
-# loads and processes training data into batches 
-# Data order in the .mat file 
-# images: N_samples x 32 x 32 x 1
-# targets N_samples x 1
-# bin_targets: N_samples x 10
-
-# SOURCE: https://github.com/FluxML/model-zoo/blob/master/vision/mnist/conv.jl
-# Bundle images together with labels into batches 
-# X should be of size Width x Height x 1 x Samples
-# Y should be of size 10 x Samples (encoded as binary targets)
-# X_batch is 32 x 32 x 1 x batchsize
-# Y_batch is 10 x batchsize
+SOURCE: https://github.com/FluxML/model-zoo/blob/master/vision/mnist/conv.jl
+"""
 function make_minibatch(X, Y, idxset)
     X_batch = Array{Float32}(undef, size(X, 1), size(X, 2), 1, length(idxset))
     Y_batch = Array{Float32}(undef, 10, length(idxset))
@@ -27,16 +23,14 @@ function make_minibatch(X, Y, idxset)
         X_batch[:, :, :, i] = Float32.(X[:, :, :, idxset[i]])
         Y_batch[:, i] = Float32.(Y[:, idxset[i]])
     end    
-    # train_set is a set of tuples (x_batch, y_batch) - first bracket -> which tupel, second bracket -Y what of the tupel
-    # train_set[1][1]
-
     return (X_batch, Y_batch)
-end # function make_minibatch
+end
 
 """
     make_batch(filepath, batch_size=128, normalize=true)
     
-Creates batches with size batch_size(default 128) from file at given filepath. Images will be normalized if normalize is set (default true). 
+Creates batches with size batch_size(default 100) from filenames at given filepath. Images will be normalized if normalize is set (default true). 
+If batch_size equals -1 the batch size will be the size of the dataset
 Structure of the .mat file: 
 
     fieldname | size
@@ -46,9 +40,7 @@ Structure of the .mat file:
 
 where N denotes the number of samples
 
-TODO: 
-batch_size = -1 in this case create only one batch out of the data with lenght of the data
-create wrapper for concatenating multiple .mat files into training batches
+TODO batch_size = -1 in this case create only one batch out of the data with lenght of the data
 """
 # function make_batch(filepath; batch_size=128, normalize=true)
 function make_batch(filepath, filenames...; batch_size=100, normalize=true, truncate_imgs=true)
@@ -109,9 +101,9 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
 	
     # display one sample of the images depends on PyPlot!
     # matshow(dropdims(images[:,:,:,10], dims=3), cmap=PyPlot.cm.gray, vmin=0, vmax=255)
-
+	
+	if ( batch_size == -1 ) batch_size = size(images, 4)
     @printf("Creating batches\n")
-    # TODO Progressbar
     idxsets = partition(1:size(images, 4), batch_size)
     train_set = [make_minibatch(images, bin_targets, i) for i in idxsets];
     
