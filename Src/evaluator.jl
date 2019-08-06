@@ -73,6 +73,7 @@ test_set_5digits = gpu.(test_set_5digits)
 datasets = [dataset("10debris", 1, test_set_10debris), dataset("30debris", 2, test_set_30debris), dataset("50debris", 3, test_set_50debris), 
 			dataset("3digits", 4, test_set_3digits), dataset("4digits", 5, test_set_4digits), dataset("5digits", 6, test_set_5digits)]
 
+# TODO load models and rename BModel to model to fit newest version of nets
 function load_model(m::model, d::dataset)
    model_name = filter(x -> !isspace(x), "$(m.name)")
    dataset_name = filter(x -> !isspace(x), "$(d.name)")

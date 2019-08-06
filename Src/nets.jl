@@ -164,7 +164,8 @@ for (idx, model_name) in enumerate(FFModels)
 		@printf("Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
 		best_acc = trainFeedforwardNet(Models[idx], train_set, test_set, model_name)
-		BSON.@save "BModel_$config.bson" Models[idx] best_acc
+		model = Models[idx]
+		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
 	end
 end
 
@@ -173,6 +174,6 @@ for (idx, model_name) in enumerate(FBModels)
 		@printf("Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
 		best_acc = trainReccurentNet(Models[idx+3], train_set, test_set, model_name)
-		BSON.@save "BModel_$config.bson" Models[idx+3] best_acc
+		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
 	end
 end
