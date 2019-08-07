@@ -3,7 +3,6 @@ module dataManager
 using MAT 
 using Base.Iterators: repeated, partition
 using Statistics
-using Printf
 """
 	make_minibatch(X, Y, idxset)
 	
@@ -42,14 +41,13 @@ where N denotes the number of samples
 
 TODO batch_size = -1 in this case create only one batch out of the data with lenght of the data
 """
-# function make_batch(filepath; batch_size=128, normalize=true)
 function make_batch(filepath, filenames...; batch_size=100, normalize=true, truncate_imgs=true)
     images = nothing
     bin_targets = nothing
     for (i, filename) in enumerate(filenames)
         # load the data from the mat file
         file = "$filepath$filename"
-        # @printf("Reading %d of %d from %s\n", i, length(filenames), file)
+        @debug("Reading $(i) of $(length(filenames)) from $(file)")
         matfile = matopen(file)
         # size(images) = (N, width, height, 1)
         imagepart = read(matfile, "images")
@@ -71,8 +69,8 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     # rearrange binary targets: targetarray(10) x batchsize(Setsize)
     bin_targets = permutedims(bin_targets, (2, 1))
    
-    # @printf("Dimension of images (%d, %d, %d, %d)\n", size(images)...)
-    # @printf("Dimension of binary targets (%d, %d)\n", size(bin_targets)...)
+    @debug("Dimension of images $(size(images, 1)) x $(size(images, 2)) x $(size(images, 3)) x $(size(images, 4))")
+    @debug("Dimension of binary targets $(size(bin_targets)) x $(size(bin_targets))")
     
     setsize = size(images, 4)
     images = convert(Array{Float64}, images) 
@@ -80,7 +78,7 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     mean_img = mean(images, dims=4)
     std_img = std(images, mean=mean_img, dims=4)
     if(normalize)
-        # @printf("normalize dataset\n")
+        @debug("normalize dataset")
         std_img_tmp = std_img
         std_img_tmp[std_img_tmp .== 0] .= 1
         for i in 1:setsize
@@ -105,7 +103,7 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
 	 if ( batch_size == -1 ) 
 	    batch_size = size(images, 4)
 	 end
-    # @printf("Creating batches\n")
+    @debug("Creating batches")
     idxsets = partition(1:size(images, 4), batch_size)
     train_set = [make_minibatch(images, bin_targets, i) for i in idxsets];
     

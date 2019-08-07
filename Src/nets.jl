@@ -14,7 +14,7 @@ BLTNet:the BNet including top down and lateral connections
 
 using Flux, Statistics
 using Flux: onecold
-using Printf, BSON
+using BSON
 using Dates
 using NNlib
 using FeedbackNets
@@ -24,11 +24,6 @@ using .dataManager: make_batch
 using .accuracy: binarycrossentropy, recur_accuracy, ff_accuracy
 import LinearAlgebra: norm
 norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
-
-struct model
-	name::String
-	chain
-end
 
 
 ######################
@@ -47,6 +42,7 @@ const time_steps = 4
 const usegpu = true
 const printout_interval = 5
 const save_interval = 25
+const time_format = "HH:MM:SS"
 # enter the datasets and models you want to train
 const dataset_names = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits"]
 const FFModel_names = [] # ["BModel", "BKModel", "BFModel"]
@@ -91,10 +87,9 @@ function load_dataset(dataset_name)
 		train_set = gpu.(train_set)
 		test_set = gpu.(test_set)
 	end
-	
-	# TODO make use of debug logging for verbose output of the dataset loader
-	# @printf("loaded %d batches of size %d for training\n", length(train_set), size(train_set[1][1], 4))
-	# @printf("loaded %d batches of size %d for testing\n", length(test_set), size(test_set[1][1], 4))
+
+	@debug("loaded $(length(train_set)) batches of size $(size(train_set[1][1], 4)) for training")
+	@debug("loaded $(length(test_set)) batches of size $(size(test_set[1][1], 4)) for testing")
 	
 	return (train_set, test_set)
 end
@@ -112,22 +107,21 @@ function trainReccurentNet(model, train_set, test_set, model_name::String, datas
     end
     
     opt = Momentum(learning_rate, momentum)
-	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+	@info("[$(Dates.format(now(), time_format))] INIT with Accuracy: $(recur_accuracy(model, test_set, time_steps, dataset_name)) and Loss: $(loss(test_set[1][1], test_set[1][2]))") 
     for i in 1:epochs
         Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        if ( rem(i, printout_interval) == 0)
-			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+        if ( rem(i, printout_interval) == 0 )
+			@info("[$(Dates.format(now(), time_format))] Epoch $(i): Accuracy: $(recur_accuracy(model, test_set, time_steps, dataset_name)), Loss: $(loss(test_set[1][1], test_set[1][2]))") 
+		end
 			# store intermediate model 
 			# TODO check if intermediate model is available and load it! 
-			if ( rem(i, save_interval) == 0 && i != epochs )
-				BSON.@save "$(model_name)_$(dataset_name).$(i).bson" model 
-			end
+		if ( rem(i, save_interval) == 0 && i != epochs )
+			BSON.@save "$(model_name)_$(dataset_name).$(i).bson" model 
 		end
     end
     return recur_accuracy(model, test_set, time_steps, dataset_name)
 end
-
 
 function trainFeedforwardNet(model, train_set, test_set, model_name::String, dataset_name::String)
 	function loss(x, y)
@@ -136,12 +130,12 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
 	end
     
     opt = Momentum(learning_rate, momentum)
-	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+	@info("[$(Dates.format(now(), time_format))] INIT with Accuracy: $(ff_accuracy(model, test_set, dataset_name)) and Loss: $(loss(test_set[1][1], test_set[1][2]))") 
     for i in 1:epochs
         Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if ( rem(i, printout_interval) == 0 ) 
-			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+			@info("[$(Dates.format(now(), time_format))] Epoch $(i): Accuracy: $(ff_accuracy(model, test_set, dataset_name)), Loss: $(loss(test_set[1][1], test_set[1][2]))") 
 		end
 		# store intermediate model 
 		if ( rem(i, save_interval) == 0 && i != epochs )
@@ -151,7 +145,6 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
     return ff_accuracy(model, test_set, dataset_name)
 end
 
-@printf("Constructing models...\n")
 FFModels = Dict( "BModel" => spoerer_model_b(Float32, inputsize=(32, 32)), 
 				 "BKModel" => spoerer_model_bk(Float32, inputsize=(32, 32)),
 				 "BFModel" => spoerer_model_bf(Float32, inputsize=(32, 32)) )
@@ -170,7 +163,7 @@ FBModels = Dict(key => Flux.Recur(val, hidden) for (key, val) in pairs(FBModels)
 
 for model_name in FFModel_names
 	for dataset_name in dataset_names
-		@printf("Training %s with %s\n", model_name, dataset_name)
+		@info("Training $(model_name) with $(dataset_name)")
 		(train_set, test_set) = load_dataset(dataset_name)
 		model = get(FFModels, model_name, nothing)
 		best_acc = trainFeedforwardNet(model, train_set, test_set, model_name, dataset_name)
@@ -180,7 +173,7 @@ end
 
 for model_name in FBModel_names
 	for dataset_name in dataset_names
-		@printf("Training %s with %s\n", model_name, dataset_name)
+		@info("Training $(model_name) with $(dataset_name)")
 		(train_set, test_set) = load_dataset(dataset_name)
 		model = get(FBModels, model_name, nothing)
 		best_acc = trainReccurentNet(model, train_set, test_set, model_name, dataset_name)
