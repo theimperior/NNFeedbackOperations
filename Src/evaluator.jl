@@ -75,10 +75,7 @@ datasets = [dataset("10debris", 1, test_set_10debris), dataset("30debris", 2, te
 
 # TODO load models and rename BModel to model to fit newest version of nets
 function load_model(m::model, d::dataset)
-   model_name = filter(x -> !isspace(x), "$(m.name)")
-   dataset_name = filter(x -> !isspace(x), "$(d.name)")
-   path = "$(modelFPprefix)$(model_name)_$(dataset_name).bson"
-	return BSON.load(path)[Symbol("$(model_name)")]
+	return BSON.load("$(modelFPprefix)$(m.name)_$(d.name).bson")[Symbol("$(m.name)")]
 end
 load_model(m::model) = return [load_model(m, d) for d in datasets]
 @printf("loading models\n")
@@ -94,6 +91,7 @@ models = [load_model(m) for m in model_config]
 """
 
 function print_accs(accs::Array{Array{Float64,1},1})
+	# TODO make use of rpad to pad model names and dataset names for a nice and pretty output
 	@printf("Final accuracies on testsets for all models and all datasets\n")
 	# model name 8
 	# dataset name 8 
@@ -110,8 +108,7 @@ function print_accs(accs::Array{Array{Float64,1},1})
 end
 
 function load_accuracy(m::model, d::dataset)
-	path = filter(x -> !isspace(x), "$(modelFPprefix)$(m.name)_$(d.name).bson")
-	@load path best_acc
+	@load "$(modelFPprefix)$(m.name)_$(d.name).bson" best_acc
 	return best_acc
 end
 load_accuracy(m::model) = return [load_accuracy(m, d) for d in datasets]
@@ -198,7 +195,7 @@ function pairwise_McNemar(modelA_output::Array{Array{Float32, 2}, 1}, modelB_out
 	if ( p_val >= 3.84 ) 
 		significance = true 
 	end
-	if ( sum(fields) != 10000 && sum(fields) != 30000 && sum(fields) != 40000 && sum(fields) != 50000 ) @warn("Fields adding up to a unexpected...") end
+	if ( sum(fields) != 10000 && sum(fields) != 30000 && sum(fields) != 40000 && sum(fields) != 50000 ) @warn("Fields adding up to a unexpected value...") end
 	return (fields, p_val, significance)
 end
 

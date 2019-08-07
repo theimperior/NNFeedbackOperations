@@ -168,6 +168,7 @@ FBModels = Dict(key => Flux.Recur(val, hidden) for (key, val) in pairs(FBModels)
 
 for model_name in FFModel_names
 	# create a own log file for every model and all datasets
+	global io
 	io = open("log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
 	global_logger(SimpleLogger(io))
 	for dataset_name in dataset_names
@@ -181,6 +182,7 @@ for model_name in FFModel_names
 end
 
 for model_name in FBModel_names
+	global io
 	io = open("log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
 	global_logger(SimpleLogger(io))
 	for dataset_name in dataset_names
