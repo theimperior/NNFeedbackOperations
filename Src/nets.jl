@@ -22,6 +22,7 @@ include("./dataManager.jl")
 include("./accuracy.jl")
 using .dataManager: make_batch
 using .accuracy: binarycrossentropy, recur_accuracy, ff_accuracy
+using Logging
 import LinearAlgebra: norm
 norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
 
@@ -53,6 +54,8 @@ train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
 test_folderpath_debris = "../digitclutter/digitdebris/testset/mat/"
 test_folderpath_digits = "../digitclutter/digitclutter/testset/mat/"
 # end of parameters
+
+io = nothing
 
 if usegpu
     using CuArrays
@@ -109,7 +112,8 @@ function trainReccurentNet(model, train_set, test_set, model_name::String, datas
     opt = Momentum(learning_rate, momentum)
 	@info("[$(Dates.format(now(), time_format))] INIT with Accuracy: $(recur_accuracy(model, test_set, time_steps, dataset_name)) and Loss: $(loss(test_set[1][1], test_set[1][2]))") 
     for i in 1:epochs
-        Flux.train!(loss, params(model), train_set, opt)
+        flush(io)
+		Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if ( rem(i, printout_interval) == 0 )
 			@info("[$(Dates.format(now(), time_format))] Epoch $(i): Accuracy: $(recur_accuracy(model, test_set, time_steps, dataset_name)), Loss: $(loss(test_set[1][1], test_set[1][2]))") 
@@ -132,6 +136,7 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
     opt = Momentum(learning_rate, momentum)
 	@info("[$(Dates.format(now(), time_format))] INIT with Accuracy: $(ff_accuracy(model, test_set, dataset_name)) and Loss: $(loss(test_set[1][1], test_set[1][2]))") 
     for i in 1:epochs
+		flush(io)
         Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if ( rem(i, printout_interval) == 0 ) 
@@ -162,6 +167,9 @@ end
 FBModels = Dict(key => Flux.Recur(val, hidden) for (key, val) in pairs(FBModels))
 
 for model_name in FFModel_names
+	# create a own log file for every model and all datasets
+	io = open("log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
+	global_logger(SimpleLogger(io))
 	for dataset_name in dataset_names
 		@info("Training $(model_name) with $(dataset_name)")
 		(train_set, test_set) = load_dataset(dataset_name)
@@ -169,9 +177,12 @@ for model_name in FFModel_names
 		best_acc = trainFeedforwardNet(model, train_set, test_set, model_name, dataset_name)
 		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
 	end
+	close(io)
 end
 
 for model_name in FBModel_names
+	io = open("log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
+	global_logger(SimpleLogger(io))
 	for dataset_name in dataset_names
 		@info("Training $(model_name) with $(dataset_name)")
 		(train_set, test_set) = load_dataset(dataset_name)
@@ -179,4 +190,5 @@ for model_name in FBModel_names
 		best_acc = trainReccurentNet(model, train_set, test_set, model_name, dataset_name)
 		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
 	end
+	close(io)
 end

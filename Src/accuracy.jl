@@ -55,7 +55,7 @@ function recur_accuracy(reccurent_model, data_set, time_steps, dataset_name::Str
 			acc += mean(matches .== 5)
 		end
 	end
-	return acc / length(data_set)
+	return round(acc / length(data_set), digits=5)
 end
 
 function ff_accuracy(feedforward_model, data_set, dataset_name::String)
@@ -75,7 +75,7 @@ function ff_accuracy(feedforward_model, data_set, dataset_name::String)
 			acc += mean(matches .== 5)
 		end
 	end
-	return acc / length(data_set)
+	return round(acc / length(data_set), digits=5)
 end
 
 end # module accuracy
