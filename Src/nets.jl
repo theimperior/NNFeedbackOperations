@@ -25,6 +25,11 @@ using .accuracy: binarycrossentropy, recur_accuracy, ff_accuracy
 import LinearAlgebra: norm
 norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
 
+struct model
+	name::String
+	chain
+end
+
 
 ######################
 # PARAMETERS
@@ -41,10 +46,11 @@ const decay_step = 40
 const time_steps = 4
 const usegpu = true
 const printout_interval = 5
+const save_interval = 25
 # enter the datasets and models you want to train
-const datasets = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits"]
-const FFModels = [] # ["BModel", "BKModel", "BFModel"]
-const FBModels = ["BLTModel"] # ["BTModel", "BLModel", "BLTModel"]
+const dataset_names = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits"]
+const FFModel_names = [] # ["BModel", "BKModel", "BFModel"]
+const FBModel_names = ["BLTModel"] # ["BTModel", "BLModel", "BLTModel"]
 
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
 train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
@@ -93,88 +99,91 @@ function load_dataset(dataset_name)
 	return (train_set, test_set)
 end
 
-function trainReccurentNet(reccurent_model, train_set, test_set, model_name::String, dataset_name::String)
+function trainReccurentNet(model, train_set, test_set, model_name::String, dataset_name::String)
 	function loss(x, y)
         loss_val = 0.0f0
         for i in 1:time_steps
-            loss_val += binarycrossentropy(reccurent_model(x), y)
+            loss_val += binarycrossentropy(model(x), y)
         end
-		Flux.reset!(reccurent_model)
+		Flux.reset!(model)
 		loss_val /= time_steps
-		loss_val += lambda * sum(norm, params(reccurent_model))
+		loss_val += lambda * sum(norm, params(model))
         return loss_val
     end
     
     opt = Momentum(learning_rate, momentum)
-	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), recur_accuracy(reccurent_model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
-        Flux.train!(loss, params(reccurent_model), train_set, opt)
+        Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        if (rem(i, printout_interval) == 0)
-			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(reccurent_model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+        if ( rem(i, printout_interval) == 0)
+			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
 			# store intermediate model 
 			# TODO check if intermediate model is available and load it! 
-			if (i != epochs) BSON.@save "$(model_name)_$(dataset_name).$(i).bson" reccurent_model end
+			if ( rem(i, save_interval) == 0 && i != epochs )
+				BSON.@save "$(model_name)_$(dataset_name).$(i).bson" model 
+			end
 		end
     end
-    return recur_accuracy(reccurent_model, test_set, time_steps, dataset_name)
+    return recur_accuracy(model, test_set, time_steps, dataset_name)
 end
 
 
-function trainFeedforwardNet(feedforward_model, train_set, test_set, model_name::String, dataset_name::String)
+function trainFeedforwardNet(model, train_set, test_set, model_name::String, dataset_name::String)
 	function loss(x, y)
-		y_hat = feedforward_model(x)
-		return binarycrossentropy(y_hat, y) + lambda * sum(norm, params(feedforward_model))
+		y_hat = model(x)
+		return binarycrossentropy(y_hat, y) + lambda * sum(norm, params(model))
 	end
     
     opt = Momentum(learning_rate, momentum)
-	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), ff_accuracy(feedforward_model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+	@printf("[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), "HH:MM:SS"), ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
-        Flux.train!(loss, params(feedforward_model), train_set, opt)
+        Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
-        if (rem(i, printout_interval) == 0) 
-			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, ff_accuracy(feedforward_model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
-			# store intermediate model 
-			if (i != epochs) BSON.@save "$(model_name)_$(dataset_name).$(i).bson" feedforward_model end
+        if ( rem(i, printout_interval) == 0 ) 
+			@printf("[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), "HH:MM:SS"), i, ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+		end
+		# store intermediate model 
+		if ( rem(i, save_interval) == 0 && i != epochs )
+			BSON.@save "$(model_name)_$(dataset_name).$(i).bson" model 
 		end
     end
-    return ff_accuracy(feedforward_model, test_set, dataset_name)
+    return ff_accuracy(model, test_set, dataset_name)
 end
 
 @printf("Constructing models...\n")
-Models = [spoerer_model_b(Float32, inputsize=(32, 32)), 
-			spoerer_model_bk(Float32, inputsize=(32, 32)),
-			spoerer_model_bf(Float32, inputsize=(32, 32)),
-			spoerer_model_bt(Float32, inputsize=(32, 32)),
-			spoerer_model_bl(Float32, inputsize=(32, 32)),
-			spoerer_model_blt(Float32, inputsize=(32, 32))]
+FFModels = Dict( "BModel" => spoerer_model_b(Float32, inputsize=(32, 32)), 
+				 "BKModel" => spoerer_model_bk(Float32, inputsize=(32, 32)),
+				 "BFModel" => spoerer_model_bf(Float32, inputsize=(32, 32)) )
+				 
+FBModels = Dict( "BTModel" => spoerer_model_bt(Float32, inputsize=(32, 32)),
+				 "BLModel" => spoerer_model_bl(Float32, inputsize=(32, 32)),
+				 "BLTModel" => spoerer_model_blt(Float32, inputsize=(32, 32)) )
 
 if usegpu
-	Models = gpu.(Models)
+	FFModels = Dict(key => gpu(val) for (key, val) in pairs(FFModels))
+	FBModels = Dict(key => gpu(val) for (key, val) in pairs(FBModels))
     hidden = Dict(key => gpu(val) for (key, val) in pairs(hidden))
 end
 
+FBModels = Dict(key => Flux.Recur(val, hidden) for (key, val) in pairs(FBModels))
 
-Models[4] = Flux.Recur(Models[4], hidden)
-Models[5]  = Flux.Recur(Models[5], hidden)
-Models[6]  = Flux.Recur(Models[6], hidden)
-
-for (idx, model_name) in enumerate(FFModels)
-	for dataset_name in datasets
+for model_name in FFModel_names
+	for dataset_name in dataset_names
 		@printf("Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
-		best_acc = trainFeedforwardNet(Models[idx], train_set, test_set, model_name, dataset_name)
-		model = Models[idx]
+		model = get(FFModels, model_name, nothing)
+		best_acc = trainFeedforwardNet(model, train_set, test_set, model_name, dataset_name)
 		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
 	end
 end
 
-for (idx, model_name) in enumerate(FBModels)
-	for dataset_name in datasets
+for model_name in FBModel_names
+	for dataset_name in dataset_names
 		@printf("Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
-		best_acc = trainReccurentNet(Models[idx+3], train_set, test_set, model_name, dataset_name)
-		model = Models[idx]
+		model = get(FBModels, model_name, nothing)
+		best_acc = trainReccurentNet(model, train_set, test_set, model_name, dataset_name)
 		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
 	end
 end
