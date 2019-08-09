@@ -14,13 +14,14 @@ BLTNet:the BNet including top down and lateral connections
 
 using Flux, Statistics
 using Flux: onecold
+using Flux.Data.MNIST
 using BSON
 using Dates
 using NNlib
 using FeedbackNets
 include("./dataManager.jl")
 include("./accuracy.jl")
-using .dataManager: make_batch
+using .dataManager: make_batch, make_minibatch, normalizePixelwise!
 using .accuracy: binarycrossentropy, recur_accuracy, ff_accuracy
 using Logging
 import LinearAlgebra: norm
@@ -44,8 +45,9 @@ const usegpu = true
 const printout_interval = 5
 const save_interval = 25
 const time_format = "HH:MM:SS"
+const images_size = (32, 32) # MNIST is using 28, 28
 # enter the datasets and models you want to train
-const dataset_names = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits"]
+const dataset_names = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits", "MNIST"]
 const FFModel_names = [] # ["BModel", "BKModel", "BFModel"]
 const FBModel_names = ["BLTModel"] # ["BTModel", "BLModel", "BLTModel"]
 
@@ -71,21 +73,61 @@ function adapt_learnrate(epoch_idx)
 end
 
 function load_dataset(dataset_name)
-	# generate filenames 
-	train_filenames = ["5000_$(dataset_name)$(m).mat" for m in 1:20]
-	test_filenames = ["5000_$(dataset_name)$(m).mat" for m in 1:2]
-	if(dataset_name == "10debris" || dataset_name == "30debris" || dataset_name == "50debris")
-		train_folderpath = train_folderpath_debris
-		test_folderpath = test_folderpath_debris
-	elseif(dataset_name == "3digits" || dataset_name == "4digits" || dataset_name == "5digits")
-		train_folderpath = train_folderpath_digits
-		test_folderpath = test_folderpath_digits
+	if(dataset_name ="MNIST")
+		@debug("loading MNIST dataset")
+		
+		# process __train__ images
+		mnist_trainlabels = MNIST.labels()
+		mnist_trainimgs = MNIST.images()
+		# reshape array to 28 x 28 x batchsize
+		train_imgs = zeros(28, 28, 1, size(mnist_trainimgs, 1))
+		for i in 1:size(mnist_trainimgs, 1)
+			train_imgs[:,:,:,i] = mnist_trainimgs[i]
+		end
+		
+		mean_img, std_img = normalizePixelwise!(train_imgs)
+		
+		bin_train_targets = convert(Array{Float32}, onehotbatch(mnist_trainlabels, 0:9))
+		train_imgs = convert(Array{Float32}, train_imgs) 
+		
+		@debug("Creating train batches")
+		idxsets = partition(1:size(train_imgs, 4), batch_size)
+		train_set = [make_minibatch(train_imgs, bin_train_targets, i) for i in idxsets]
+		
+		# process __test__ images
+		mnist_testlabels = MNIST.labels(:test)
+		mnist_testimgs = MNIST.images(:test)
+		# reshape array to 28 x 28 x batchsize
+		test_imgs = zeros(28, 28, 1, size(mnist_testimgs, 1))
+		for i in 1:size(mnist_testimgs, 1)
+			test_imgs[:,:,:,i] = mnist_testimgs[i]
+		end
+		
+		mean_img, std_img = normalizePixelwise!(test_imgs)
+		
+		bin_test_targets = convert(Array{Float32}, onehotbatch(mnist_testlabels, 0:9))
+		test_imgs = convert(Array{Float32}, test_imgs) 
+		
+		@debug("Creating test batches")
+		idxsets = partition(1:size(test_imgs, 4), batch_size)
+		test_set = [make_minibatch(test_imgs, bin_test_targets, i) for i in idxsets]
+	else
+		# generate filenames 
+		train_filenames = ["5000_$(dataset_name)$(m).mat" for m in 1:20]
+		test_filenames = ["5000_$(dataset_name)$(m).mat" for m in 1:2]
+		if(dataset_name == "10debris" || dataset_name == "30debris" || dataset_name == "50debris")
+			train_folderpath = train_folderpath_debris
+			test_folderpath = test_folderpath_debris
+		elseif(dataset_name == "3digits" || dataset_name == "4digits" || dataset_name == "5digits")
+			train_folderpath = train_folderpath_digits
+			test_folderpath = test_folderpath_digits
+		end
+
+		train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
+		# test_set needs to have the same batchsize as the train_set due to model state init
+		test_set, tmp1, tmp2 = make_batch(test_folderpath, test_filenames..., batch_size=batch_size)
 	end
-
-	train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
-	# test_set needs to have the same batchsize as the train_set due to model state init
-	test_set, tmp1, tmp2 = make_batch(test_folderpath, test_filenames..., batch_size=batch_size)
-
+	
 	if usegpu
 		train_set = gpu.(train_set)
 		test_set = gpu.(test_set)

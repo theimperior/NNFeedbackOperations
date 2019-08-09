@@ -42,6 +42,7 @@ where N denotes the number of samples
 TODO batch_size = -1 in this case create only one batch out of the data with lenght of the data
 """
 function make_batch(filepath, filenames...; batch_size=100, normalize=true, truncate_imgs=true)
+	# TODO images = [] working??
     images = nothing
     bin_targets = nothing
     for (i, filename) in enumerate(filenames)
@@ -75,21 +76,9 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     setsize = size(images, 4)
     images = convert(Array{Float64}, images) 
     
-    mean_img = mean(images, dims=4)
-    std_img = std(images, mean=mean_img, dims=4)
     if(normalize)
-        @debug("normalize dataset")
-        std_img_tmp = std_img
-        std_img_tmp[std_img_tmp .== 0] .= 1
-        for i in 1:setsize
-            images[:, :, :, i] = (images[:, :, :, i] - mean_img) ./ std_img_tmp
-        end
-		if(truncate_imgs)
-			# truncate the last 1% beyond 2.576 sigma 
-			images[images .> 2.576] .= 2.576
-			images[images .< -2.576] .= -2.576
-		end
-    end
+		(mean_img, std_img) = normalizePixelwise!(images)
+	end
     
     # Convert to Float32
     bin_targets = convert(Array{Float32}, bin_targets)
@@ -109,4 +98,28 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     
     return train_set, mean_img, std_img
 end # function make_batch
+
+"""
+normalize input images along the batch dimension
+input should have standart flux order: Widht x height x channels x batchsize
+if truncate is set to true the last 1% beyond 2.576 sigma will be clipped to 2.576 sigma
+"""
+function normalizePixelwise!(images; truncate=true)
+	mean_img = mean(images, dims=4)
+    std_img = std(images, mean=mean_img, dims=4)
+    
+	@debug("normalize dataset")
+	std_img_tmp = std_img
+	std_img_tmp[std_img_tmp .== 0] .= 1
+	for i in 1:setsize
+		images[:, :, :, i] = (images[:, :, :, i] - mean_img) ./ std_img_tmp
+	end
+	if(truncate_imgs)
+		# truncate the last 1% beyond 2.576 sigma 
+		images[images .> 2.576] .= 2.576
+		images[images .< -2.576] .= -2.576
+	end
+	return (mean_img, std_img)
+end
+
 end # module dataManager
