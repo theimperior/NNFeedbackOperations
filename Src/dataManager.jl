@@ -73,7 +73,7 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     @debug("Dimension of images $(size(images, 1)) x $(size(images, 2)) x $(size(images, 3)) x $(size(images, 4))")
     @debug("Dimension of binary targets $(size(bin_targets)) x $(size(bin_targets))")
     
-    setsize = size(images, 4)
+    
     images = convert(Array{Float64}, images) 
     
     if(normalize)
@@ -107,6 +107,8 @@ if truncate is set to true the last 1% beyond 2.576 sigma will be clipped to 2.5
 function normalizePixelwise!(images; truncate=true)
 	mean_img = mean(images, dims=4)
     std_img = std(images, mean=mean_img, dims=4)
+	
+	setsize = size(images, 4)
     
 	@debug("normalize dataset")
 	std_img_tmp = std_img
@@ -114,7 +116,7 @@ function normalizePixelwise!(images; truncate=true)
 	for i in 1:setsize
 		images[:, :, :, i] = (images[:, :, :, i] - mean_img) ./ std_img_tmp
 	end
-	if(truncate_imgs)
+	if(truncate)
 		# truncate the last 1% beyond 2.576 sigma 
 		images[images .> 2.576] .= 2.576
 		images[images .< -2.576] .= -2.576
