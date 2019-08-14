@@ -44,11 +44,11 @@ const usegpu = true
 const printout_interval = 5
 const save_interval = 25
 const time_format = "HH:MM:SS"
-const images_size = (32, 32) # MNIST is using 28, 28
+image_size = (32, 32) # MNIST is using 28, 28
 # enter the datasets and models you want to train
-const dataset_names = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits", "MNIST"]
-const FFModel_names = [] # ["BModel", "BKModel", "BFModel"]
-const FBModel_names = ["BLTModel"] # ["BTModel", "BLModel", "BLTModel"]
+const dataset_names = ["MNIST"] # ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits", "MNIST"]
+const FFModel_names = ["BModel", "BKModel", "BFModel"] # ["BModel", "BKModel", "BFModel"]
+const FBModel_names = ["BTModel", "BLModel", "BLTModel"] # ["BTModel", "BLModel", "BLTModel"]
 
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
 train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
@@ -56,6 +56,7 @@ test_folderpath_debris = "../digitclutter/digitdebris/testset/mat/"
 test_folderpath_digits = "../digitclutter/digitclutter/testset/mat/"
 
 const model_save_location = "../trainedModels/"
+const log_save_location = "../logs/"
 # end of parameters
 
 io = nothing
@@ -74,9 +75,13 @@ function adapt_learnrate(epoch_idx)
 end
 
 function load_dataset(dataset_name)
+	global image_size
+	
 	if(dataset_name ="MNIST")
+		image_size = (28,28)
 		train_set, test_set = load_MNIST()
 	else
+		image_size = (32, 32)
 		# generate filenames 
 		train_filenames = ["5000_$(dataset_name)$(m).mat" for m in 1:20]
 		test_filenames = ["5000_$(dataset_name)$(m).mat" for m in 1:2]
@@ -149,17 +154,15 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
     return ff_accuracy(model, test_set, dataset_name)
 end
 
-FFModels = Dict( "BModel" => spoerer_model_b(Float32, inputsize=(32, 32)), 
-				 "BKModel" => spoerer_model_bk(Float32, inputsize=(32, 32)),
-				 "BFModel" => spoerer_model_bf(Float32, inputsize=(32, 32)) )
+FFModels = Dict( "BModel" => :spoerer_model_b, 
+				 "BKModel" => :spoerer_model_bk,
+				 "BFModel" => :spoerer_model_bf )
 				 
-FBModels = Dict( "BTModel" => spoerer_model_bt(Float32, inputsize=(32, 32)),
-				 "BLModel" => spoerer_model_bl(Float32, inputsize=(32, 32)),
-				 "BLTModel" => spoerer_model_blt(Float32, inputsize=(32, 32)) )
+FBModels = Dict( "BTModel" => :spoerer_model_bt,
+				 "BLModel" => :spoerer_model_bl,
+				 "BLTModel" => :spoerer_model_blt )
 
 if usegpu
-	FFModels = Dict(key => gpu(val) for (key, val) in pairs(FFModels))
-	FBModels = Dict(key => gpu(val) for (key, val) in pairs(FBModels))
     hidden = Dict(key => gpu(val) for (key, val) in pairs(hidden))
 end
 
@@ -168,12 +171,16 @@ FBModels = Dict(key => Flux.Recur(val, hidden) for (key, val) in pairs(FBModels)
 for model_name in FFModel_names
 	# create a own log file for every model and all datasets
 	global io
-	io = open("log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
+	io = open("$(log_save_location)log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
 	global_logger(SimpleLogger(io)) # for debug outputs
 	for dataset_name in dataset_names
 		@printf(io, "Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
-		model = get(FFModels, model_name, nothing)
+		
+		# make sure the model gets recreated for every new dataset
+		model = eval(get(FFModels, model_name, nothing)) (Float32, inputsize=image_size)
+		if (usegpu) model = gpu(model) end
+		
 		best_acc = trainFeedforwardNet(model, train_set, test_set, model_name, dataset_name)
 		model = cpu(model)
 		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" model best_acc
@@ -183,12 +190,16 @@ end
 
 for model_name in FBModel_names
 	global io
-	io = open("log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
+	io = open("$(log_save_location)log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
 	global_logger(SimpleLogger(io)) # for debug outputs
 	for dataset_name in dataset_names
 		@printf(io, "Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
-		model = get(FBModels, model_name, nothing)
+		
+		# make sure the model gets recreated for every new dataset
+		model = eval(get(FBModels, model_name, nothing)) (Float32, inputsize=image_size)
+		if (usegpu) model = gpu(model) end
+		
 		best_acc = trainReccurentNet(model, train_set, test_set, model_name, dataset_name)
 		model = cpu(model)
 		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" model best_acc
