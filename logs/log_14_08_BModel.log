@@ -1,2 +1,22 @@
 Training BModel with MNIST
-[14:22:58] INIT with Accuracy: 0.000000 and Loss: 1.079293[14:26:39] Epoch 5: Accuracy: 0.000000, Loss: 0.095364[14:28:52] Epoch 10: Accuracy: 0.000000, Loss: 0.080136[14:31:06] Epoch 15: Accuracy: 0.000000, Loss: 0.076799
+[14:43:37] INIT with Accuracy: 0.089200 and Loss: 0.898107
+[14:47:33] Epoch 5: Accuracy: 0.894000, Loss: 0.091748
+[14:49:51] Epoch 10: Accuracy: 0.916000, Loss: 0.081699
+[14:52:09] Epoch 15: Accuracy: 0.926900, Loss: 0.080561
+[14:54:28] Epoch 20: Accuracy: 0.931000, Loss: 0.077829
+[14:56:48] Epoch 25: Accuracy: 0.933000, Loss: 0.074780
+[14:59:14] Epoch 30: Accuracy: 0.935100, Loss: 0.074092
+[15:01:39] Epoch 35: Accuracy: 0.935500, Loss: 0.074670
+[15:04:05] Epoch 40: Accuracy: 0.936000, Loss: 0.074426
+[15:06:29] Epoch 45: Accuracy: 0.936500, Loss: 0.074254
+[15:08:53] Epoch 50: Accuracy: 0.937000, Loss: 0.073889
+[15:11:14] Epoch 55: Accuracy: 0.937300, Loss: 0.073299
+[15:13:37] Epoch 60: Accuracy: 0.938000, Loss: 0.072805
+[15:16:04] Epoch 65: Accuracy: 0.938700, Loss: 0.072485
+[15:18:26] Epoch 70: Accuracy: 0.938200, Loss: 0.072260
+[15:20:47] Epoch 75: Accuracy: 0.938900, Loss: 0.072089
+[15:23:15] Epoch 80: Accuracy: 0.939000, Loss: 0.072000
+[15:25:44] Epoch 85: Accuracy: 0.939600, Loss: 0.071979
+[15:28:13] Epoch 90: Accuracy: 0.939600, Loss: 0.071987
+[15:30:43] Epoch 95: Accuracy: 0.939800, Loss: 0.071976
+[15:33:08] Epoch 100: Accuracy: 0.939700, Loss: 0.071998
