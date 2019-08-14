@@ -166,8 +166,6 @@ if usegpu
     hidden = Dict(key => gpu(val) for (key, val) in pairs(hidden))
 end
 
-FBModels = Dict(key => Flux.Recur(val, hidden) for (key, val) in pairs(FBModels))
-
 for model_name in FFModel_names
 	# create a own log file for every model and all datasets
 	global io
@@ -197,7 +195,8 @@ for model_name in FBModel_names
 		(train_set, test_set) = load_dataset(dataset_name)
 		
 		# make sure the model gets recreated for every new dataset
-		model = eval(get(FBModels, model_name, nothing)) (Float32, inputsize=image_size)
+		chain = eval(get(FBModels, model_name, nothing)) (Float32, inputsize=image_size)
+		model = Flux.Recur(chain, hidden)
 		if (usegpu) model = gpu(model) end
 		
 		best_acc = trainReccurentNet(model, train_set, test_set, model_name, dataset_name)
