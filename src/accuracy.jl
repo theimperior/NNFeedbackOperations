@@ -41,7 +41,7 @@ function recur_accuracy(reccurent_model, data_set, time_steps, dataset_name::Str
 		y_hat = reccurent_model(data)
 		Flux.reset!(reccurent_model)
 		
-		if( dataset_name == "10debris" || dataset_name == "30debris" || dataset_name == "50debris" ) 
+		if( dataset_name == "10debris" || dataset_name == "30debris" || dataset_name == "50debris" || dataset_name == "MNIST" ) 
 			acc += mean(onecold(y_hat) .== onecold(labels))
 		elseif ( dataset_name == "3digits" )
 			# This has been tested and is executed one after the other
@@ -62,7 +62,7 @@ function ff_accuracy(feedforward_model, data_set, dataset_name::String)
 	acc = 0
 	for (data, labels) in data_set
 		y_hat = feedforward_model(data)
-		if( dataset_name == "10debris" || dataset_name == "30debris" || dataset_name == "50debris" )
+		if( dataset_name == "10debris" || dataset_name == "30debris" || dataset_name == "50debris" || dataset_name == "MNIST" )
 			acc += mean(onecold(y_hat) .== onecold(labels))
 		elseif ( dataset_name == "3digits" )
 			matches = onematch!(y_hat, labels) .+ onematch!(y_hat, labels) .+ onematch!(y_hat, labels)
