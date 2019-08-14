@@ -54,6 +54,8 @@ train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
 train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
 test_folderpath_debris = "../digitclutter/digitdebris/testset/mat/"
 test_folderpath_digits = "../digitclutter/digitclutter/testset/mat/"
+
+const model_save_location = "../trainedModels/"
 # end of parameters
 
 io = nothing
@@ -174,7 +176,7 @@ for model_name in FFModel_names
 		model = get(FFModels, model_name, nothing)
 		best_acc = trainFeedforwardNet(model, train_set, test_set, model_name, dataset_name)
 		model = cpu(model)
-		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
+		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" model best_acc
 	end
 	close(io)
 end
@@ -189,7 +191,7 @@ for model_name in FBModel_names
 		model = get(FBModels, model_name, nothing)
 		best_acc = trainReccurentNet(model, train_set, test_set, model_name, dataset_name)
 		model = cpu(model)
-		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
+		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" model best_acc
 	end
 	close(io)
 end
