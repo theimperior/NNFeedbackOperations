@@ -3,6 +3,7 @@ module dataManager
 using MAT 
 using Base.Iterators: repeated, partition
 using Statistics
+using Flux.Data.MNIST
 """
 	make_minibatch(X, Y, idxset)
 	
@@ -42,9 +43,8 @@ where N denotes the number of samples
 TODO batch_size = -1 in this case create only one batch out of the data with lenght of the data
 """
 function make_batch(filepath, filenames...; batch_size=100, normalize=true, truncate_imgs=true)
-	# TODO images = [] working??
-    images = nothing
-    bin_targets = nothing
+    images = Array{Float64}(undef, 0)
+    bin_targets = Array{Float64}(undef, 0)
     for (i, filename) in enumerate(filenames)
         # load the data from the mat file
         file = "$filepath$filename"
@@ -55,13 +55,9 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
         # size(bin_targets) = (N, 10)
         bin_targetpart = read(matfile, "binary_targets")
         close(matfile) 
-        if(isnothing(images))
-            images = imagepart
-            bin_targets = bin_targetpart
-        else
-            images = cat(dims=1, images, imagepart)
-            bin_targets = cat(dims=1, bin_targets, bin_targetpart)   
-        end
+
+        images = cat(dims=1, images, imagepart)
+        bin_targets = cat(dims=1, bin_targets, bin_targetpart)   
         
     end
 
@@ -98,6 +94,49 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     
     return train_set, mean_img, std_img
 end # function make_batch
+
+
+function load_MNIST()
+	@debug("loading MNIST dataset")
+		
+	# process __train__ images
+	mnist_trainlabels = MNIST.labels()
+	mnist_trainimgs = MNIST.images()
+	# reshape array to 28 x 28 x batchsize
+	train_imgs = zeros(28, 28, 1, size(mnist_trainimgs, 1))
+	for i in 1:size(mnist_trainimgs, 1)
+		train_imgs[:,:,:,i] = mnist_trainimgs[i]
+	end
+	
+	mean_img, std_img = normalizePixelwise!(train_imgs)
+	
+	bin_train_targets = convert(Array{Float32}, onehotbatch(mnist_trainlabels, 0:9))
+	train_imgs = convert(Array{Float32}, train_imgs) 
+	
+	@debug("Creating train batches")
+	idxsets = partition(1:size(train_imgs, 4), batch_size)
+	train_set = [make_minibatch(train_imgs, bin_train_targets, i) for i in idxsets]
+	
+	# process __test__ images
+	mnist_testlabels = MNIST.labels(:test)
+	mnist_testimgs = MNIST.images(:test)
+	# reshape array to 28 x 28 x batchsize
+	test_imgs = zeros(28, 28, 1, size(mnist_testimgs, 1))
+	for i in 1:size(mnist_testimgs, 1)
+		test_imgs[:,:,:,i] = mnist_testimgs[i]
+	end
+	
+	mean_img, std_img = normalizePixelwise!(test_imgs)
+	
+	bin_test_targets = convert(Array{Float32}, onehotbatch(mnist_testlabels, 0:9))
+	test_imgs = convert(Array{Float32}, test_imgs) 
+	
+	@debug("Creating test batches")
+	idxsets = partition(1:size(test_imgs, 4), batch_size)
+	test_set = [make_minibatch(test_imgs, bin_test_targets, i) for i in idxsets]
+	
+	return train_set, test_set
+end
 
 """
 normalize input images along the batch dimension

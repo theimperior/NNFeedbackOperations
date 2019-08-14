@@ -14,7 +14,6 @@ BLTNet:the BNet including top down and lateral connections
 
 using Flux, Statistics
 using Flux: onecold
-using Flux.Data.MNIST
 using BSON
 using Dates
 using NNlib
@@ -74,43 +73,7 @@ end
 
 function load_dataset(dataset_name)
 	if(dataset_name ="MNIST")
-		@debug("loading MNIST dataset")
-		
-		# process __train__ images
-		mnist_trainlabels = MNIST.labels()
-		mnist_trainimgs = MNIST.images()
-		# reshape array to 28 x 28 x batchsize
-		train_imgs = zeros(28, 28, 1, size(mnist_trainimgs, 1))
-		for i in 1:size(mnist_trainimgs, 1)
-			train_imgs[:,:,:,i] = mnist_trainimgs[i]
-		end
-		
-		mean_img, std_img = normalizePixelwise!(train_imgs)
-		
-		bin_train_targets = convert(Array{Float32}, onehotbatch(mnist_trainlabels, 0:9))
-		train_imgs = convert(Array{Float32}, train_imgs) 
-		
-		@debug("Creating train batches")
-		idxsets = partition(1:size(train_imgs, 4), batch_size)
-		train_set = [make_minibatch(train_imgs, bin_train_targets, i) for i in idxsets]
-		
-		# process __test__ images
-		mnist_testlabels = MNIST.labels(:test)
-		mnist_testimgs = MNIST.images(:test)
-		# reshape array to 28 x 28 x batchsize
-		test_imgs = zeros(28, 28, 1, size(mnist_testimgs, 1))
-		for i in 1:size(mnist_testimgs, 1)
-			test_imgs[:,:,:,i] = mnist_testimgs[i]
-		end
-		
-		mean_img, std_img = normalizePixelwise!(test_imgs)
-		
-		bin_test_targets = convert(Array{Float32}, onehotbatch(mnist_testlabels, 0:9))
-		test_imgs = convert(Array{Float32}, test_imgs) 
-		
-		@debug("Creating test batches")
-		idxsets = partition(1:size(test_imgs, 4), batch_size)
-		test_set = [make_minibatch(test_imgs, bin_test_targets, i) for i in idxsets]
+		train_set, test_set = load_MNIST()
 	else
 		# generate filenames 
 		train_filenames = ["5000_$(dataset_name)$(m).mat" for m in 1:20]
@@ -122,7 +85,7 @@ function load_dataset(dataset_name)
 			train_folderpath = train_folderpath_digits
 			test_folderpath = test_folderpath_digits
 		end
-
+		
 		train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
 		# test_set needs to have the same batchsize as the train_set due to model state init
 		test_set, tmp1, tmp2 = make_batch(test_folderpath, test_filenames..., batch_size=batch_size)
@@ -152,18 +115,13 @@ function trainReccurentNet(model, train_set, test_set, model_name::String, datas
     end
     
     opt = Momentum(learning_rate, momentum)
-	@info("[$(Dates.format(now(), time_format))] INIT with Accuracy: $(recur_accuracy(model, test_set, time_steps, dataset_name)) and Loss: $(loss(test_set[1][1], test_set[1][2]))") 
+	@printf(io, "[%s] INIT with Accuracy: %f and Loss: %f", Dates.format(now(), time_format), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
         flush(io)
 		Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if ( rem(i, printout_interval) == 0 )
-			@info("[$(Dates.format(now(), time_format))] Epoch $(i): Accuracy: $(recur_accuracy(model, test_set, time_steps, dataset_name)), Loss: $(loss(test_set[1][1], test_set[1][2]))") 
-		end
-			# store intermediate model 
-			# TODO check if intermediate model is available and load it! 
-		if ( rem(i, save_interval) == 0 && i != epochs )
-			BSON.@save "$(model_name)_$(dataset_name).$(i).bson" model 
+			@printf(io, "[%s] Epoch %d: Accuracy: %f, Loss: %f", Dates.format(now(), time_format), i, recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2]))
 		end
     end
     return recur_accuracy(model, test_set, time_steps, dataset_name)
@@ -176,18 +134,15 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
 	end
     
     opt = Momentum(learning_rate, momentum)
-	@info("[$(Dates.format(now(), time_format))] INIT with Accuracy: $(ff_accuracy(model, test_set, dataset_name)) and Loss: $(loss(test_set[1][1], test_set[1][2]))") 
+	@printf(io, "[%s] INIT with Accuracy: %f and Loss: %f", Dates.format(now(), time_format), ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
 		flush(io)
         Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if ( rem(i, printout_interval) == 0 ) 
-			@info("[$(Dates.format(now(), time_format))] Epoch $(i): Accuracy: $(ff_accuracy(model, test_set, dataset_name)), Loss: $(loss(test_set[1][1], test_set[1][2]))") 
+			@printf(io, "[%s] Epoch %d: Accuracy: %f, Loss: %f", Dates.format(now(), time_format), i, ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
 		end
-		# store intermediate model 
-		if ( rem(i, save_interval) == 0 && i != epochs )
-			BSON.@save "$(model_name)_$(dataset_name).$(i).bson" model 
-		end
+		# TODO store intermediate model or load if it already exists, one needs to find a good solution not to move the model on the cpu store it and then move it back to the gpu 
     end
     return ff_accuracy(model, test_set, dataset_name)
 end
@@ -212,12 +167,13 @@ for model_name in FFModel_names
 	# create a own log file for every model and all datasets
 	global io
 	io = open("log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
-	global_logger(SimpleLogger(io))
+	global_logger(SimpleLogger(io)) # for debug outputs
 	for dataset_name in dataset_names
-		@info("Training $(model_name) with $(dataset_name)")
+		@printf(io, "Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
 		model = get(FFModels, model_name, nothing)
 		best_acc = trainFeedforwardNet(model, train_set, test_set, model_name, dataset_name)
+		model = cpu(model)
 		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
 	end
 	close(io)
@@ -226,12 +182,13 @@ end
 for model_name in FBModel_names
 	global io
 	io = open("log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
-	global_logger(SimpleLogger(io))
+	global_logger(SimpleLogger(io)) # for debug outputs
 	for dataset_name in dataset_names
-		@info("Training $(model_name) with $(dataset_name)")
+		@printf(io, "Training %s with %s\n", model_name, dataset_name)
 		(train_set, test_set) = load_dataset(dataset_name)
 		model = get(FBModels, model_name, nothing)
 		best_acc = trainReccurentNet(model, train_set, test_set, model_name, dataset_name)
+		model = cpu(model)
 		BSON.@save "$(model_name)_$(dataset_name).bson" model best_acc
 	end
 	close(io)
