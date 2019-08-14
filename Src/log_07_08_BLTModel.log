@@ -76,3 +76,53 @@
 └ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
 ┌ Info: [15:50:15] Epoch 75: Accuracy: 0.0969, Loss: 0.40804902f0 (tracked)
 └ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [18:32:13] Epoch 80: Accuracy: 0.0969, Loss: 0.407911f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [21:07:45] Epoch 85: Accuracy: 0.0969, Loss: 0.40782523f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [23:40:56] Epoch 90: Accuracy: 0.0969, Loss: 0.4077263f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [02:29:15] Epoch 95: Accuracy: 0.0969, Loss: 0.40765572f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [05:33:23] Epoch 100: Accuracy: 0.0969, Loss: 0.40758187f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: Training BLTModel with 50debris
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:189
+┌ Info: [05:41:05] INIT with Accuracy: 0.101 and Loss: 0.40978235f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:113
+┌ Info: [09:08:24] Epoch 5: Accuracy: 0.0959, Loss: 0.40239495f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [12:44:22] Epoch 10: Accuracy: 0.0959, Loss: 0.39656338f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [16:26:14] Epoch 15: Accuracy: 0.0959, Loss: 0.39187077f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [20:23:25] Epoch 20: Accuracy: 0.0959, Loss: 0.38852873f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [00:14:45] Epoch 25: Accuracy: 0.0959, Loss: 0.38573575f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [03:21:52] Epoch 30: Accuracy: 0.0959, Loss: 0.3841038f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [06:06:27] Epoch 35: Accuracy: 0.0963, Loss: 0.38203368f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [08:52:43] Epoch 40: Accuracy: 0.2217, Loss: 0.36909547f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [11:43:05] Epoch 45: Accuracy: 0.5609, Loss: 0.33571893f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [14:35:42] Epoch 50: Accuracy: 0.5861, Loss: 0.33311263f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [17:30:35] Epoch 55: Accuracy: 0.5827, Loss: 0.33123544f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [20:29:19] Epoch 60: Accuracy: 0.5883, Loss: 0.33125594f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [23:30:46] Epoch 65: Accuracy: 0.5925, Loss: 0.3314759f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [02:35:02] Epoch 70: Accuracy: 0.6048, Loss: 0.33230516f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [05:41:15] Epoch 75: Accuracy: 0.6239, Loss: 0.3255738f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [08:50:17] Epoch 80: Accuracy: 0.6251, Loss: 0.32385758f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [12:03:01] Epoch 85: Accuracy: 0.638, Loss: 0.3238585f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
+┌ Info: [15:19:22] Epoch 90: Accuracy: 0.6339, Loss: 0.32396355f0 (tracked)
+└ @ Main /home/svendt/NNFeedbackOperations/Src/nets.jl:119
