@@ -48,7 +48,7 @@ const time_format = "HH:MM:SS"
 image_size = (32, 32) # MNIST is using 28, 28
 # enter the datasets and models you want to train
 const dataset_names = ["MNIST"] # ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits", "MNIST"]
-const FFModel_names = ["BModel", "BKModel", "BFModel"] # ["BModel", "BKModel", "BFModel"]
+const FFModel_names = [] # ["BModel", "BKModel", "BFModel"]
 const FBModel_names = ["BTModel", "BLModel", "BLTModel"] # ["BTModel", "BLModel", "BLTModel"]
 
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
@@ -65,11 +65,6 @@ io = nothing
 if usegpu
     using CuArrays
 end
-
-hidden = Dict(
-    "l1" => zeros(Float32, 32, 32, 32, 100),
-    "l2" => zeros(Float32, 16, 16, 32, 100)
-    )
 
 function adapt_learnrate(epoch_idx)
     return init_learning_rate * decay_rate^(epoch_idx / decay_step)
@@ -163,9 +158,7 @@ FBModels = Dict( "BTModel" => :spoerer_model_bt,
 				 "BLModel" => :spoerer_model_bl,
 				 "BLTModel" => :spoerer_model_blt )
 
-if usegpu
-    hidden = Dict(key => gpu(val) for (key, val) in pairs(hidden))
-end
+
 
 for model_name in FFModel_names
 	# create a own log file for every model and all datasets
@@ -196,6 +189,14 @@ for model_name in FBModel_names
 		(train_set, test_set) = load_dataset(dataset_name)
 		
 		# make sure the model gets recreated for every new dataset
+		hidden = Dict(
+				"l1" => zeros(Float32, image_size[1], image_size[2], 32, batch_size),
+				"l2" => zeros(Float32, image_size[1] / 2, image_size[2] / 2, 32, batch_size)
+				)
+		if usegpu
+			hidden = Dict(key => gpu(val) for (key, val) in pairs(hidden))
+		end
+		
 		chain = eval(get(FBModels, model_name, nothing))(Float32, inputsize=image_size)
 		model = Flux.Recur(chain, hidden)
 		if (usegpu) model = gpu(model) end
