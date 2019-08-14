@@ -16,11 +16,12 @@ using Flux, Statistics
 using Flux: onecold
 using BSON
 using Dates
+using Printf
 using NNlib
 using FeedbackNets
 include("./dataManager.jl")
 include("./accuracy.jl")
-using .dataManager: make_batch, make_minibatch, normalizePixelwise!
+using .dataManager: make_batch, make_minibatch, load_MNIST
 using .accuracy: binarycrossentropy, recur_accuracy, ff_accuracy
 using Logging
 import LinearAlgebra: norm
@@ -77,7 +78,7 @@ end
 function load_dataset(dataset_name)
 	global image_size
 	
-	if(dataset_name ="MNIST")
+	if(dataset_name == "MNIST")
 		image_size = (28,28)
 		train_set, test_set = load_MNIST()
 	else
@@ -122,13 +123,13 @@ function trainReccurentNet(model, train_set, test_set, model_name::String, datas
     end
     
     opt = Momentum(learning_rate, momentum)
-	@printf(io, "[%s] INIT with Accuracy: %f and Loss: %f", Dates.format(now(), time_format), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+	@printf(io, "[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), time_format), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
         flush(io)
 		Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if ( rem(i, printout_interval) == 0 )
-			@printf(io, "[%s] Epoch %d: Accuracy: %f, Loss: %f", Dates.format(now(), time_format), i, recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2]))
+			@printf(io, "[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), time_format), i, recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2]))
 		end
     end
     return recur_accuracy(model, test_set, time_steps, dataset_name)
@@ -141,13 +142,13 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
 	end
     
     opt = Momentum(learning_rate, momentum)
-	@printf(io, "[%s] INIT with Accuracy: %f and Loss: %f", Dates.format(now(), time_format), ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+	@printf(io, "[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), time_format), ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
     for i in 1:epochs
 		flush(io)
         Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if ( rem(i, printout_interval) == 0 ) 
-			@printf(io, "[%s] Epoch %d: Accuracy: %f, Loss: %f", Dates.format(now(), time_format), i, ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+			@printf(io, "[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), time_format), i, ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
 		end
 		# TODO store intermediate model or load if it already exists, one needs to find a good solution not to move the model on the cpu store it and then move it back to the gpu 
     end
@@ -176,7 +177,7 @@ for model_name in FFModel_names
 		(train_set, test_set) = load_dataset(dataset_name)
 		
 		# make sure the model gets recreated for every new dataset
-		model = eval(get(FFModels, model_name, nothing)) (Float32, inputsize=image_size)
+		model = eval(get(FFModels, model_name, nothing))(Float32, inputsize=image_size)
 		if (usegpu) model = gpu(model) end
 		
 		best_acc = trainFeedforwardNet(model, train_set, test_set, model_name, dataset_name)
@@ -195,7 +196,7 @@ for model_name in FBModel_names
 		(train_set, test_set) = load_dataset(dataset_name)
 		
 		# make sure the model gets recreated for every new dataset
-		chain = eval(get(FBModels, model_name, nothing)) (Float32, inputsize=image_size)
+		chain = eval(get(FBModels, model_name, nothing))(Float32, inputsize=image_size)
 		model = Flux.Recur(chain, hidden)
 		if (usegpu) model = gpu(model) end
 		

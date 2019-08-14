@@ -4,6 +4,7 @@ using MAT
 using Base.Iterators: repeated, partition
 using Statistics
 using Flux.Data.MNIST
+using Flux:onehotbatch
 """
 	make_minibatch(X, Y, idxset)
 	
@@ -42,7 +43,7 @@ where N denotes the number of samples
 
 TODO batch_size = -1 in this case create only one batch out of the data with lenght of the data
 """
-function make_batch(filepath, filenames...; batch_size=100, normalize=true, truncate_imgs=true)
+function make_batch(filepath, filenames...; batch_size=100, normalize_imgs=true, truncate_imgs=true)
     images = Array{Float64}(undef, 0)
     bin_targets = Array{Float64}(undef, 0)
     for (i, filename) in enumerate(filenames)
@@ -72,8 +73,8 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
     
     images = convert(Array{Float64}, images) 
     
-    if(normalize)
-		(mean_img, std_img) = normalizePixelwise!(images)
+    if(normalize_imgs)
+		(mean_img, std_img) = normalizePixelwise!(images, truncate_imgs)
 	end
     
     # Convert to Float32
@@ -96,7 +97,7 @@ function make_batch(filepath, filenames...; batch_size=100, normalize=true, trun
 end # function make_batch
 
 
-function load_MNIST()
+function load_MNIST(;batch_size=100, normalize_imgs=true, truncate_imgs=true)
 	@debug("loading MNIST dataset")
 		
 	# process __train__ images
@@ -107,8 +108,10 @@ function load_MNIST()
 	for i in 1:size(mnist_trainimgs, 1)
 		train_imgs[:,:,:,i] = mnist_trainimgs[i]
 	end
-	
-	mean_img, std_img = normalizePixelwise!(train_imgs)
+
+	if(normalize_imgs)
+	   mean_img, std_img = normalizePixelwise!(train_imgs, truncate=truncate_imgs)
+   end
 	
 	bin_train_targets = convert(Array{Float32}, onehotbatch(mnist_trainlabels, 0:9))
 	train_imgs = convert(Array{Float32}, train_imgs) 

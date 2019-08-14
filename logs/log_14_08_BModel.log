@@ -1,0 +1,2 @@
+Training BModel with MNIST
+[14:22:58] INIT with Accuracy: 0.000000 and Loss: 1.079293[14:26:39] Epoch 5: Accuracy: 0.000000, Loss: 0.095364[14:28:52] Epoch 10: Accuracy: 0.000000, Loss: 0.080136[14:31:06] Epoch 15: Accuracy: 0.000000, Loss: 0.076799
