@@ -191,7 +191,7 @@ for model_name in FBModel_names
 		# make sure the model gets recreated for every new dataset
 		hidden = Dict(
 				"l1" => zeros(Float32, image_size[1], image_size[2], 32, batch_size),
-				"l2" => zeros(Float32, image_size[1] / 2, image_size[2] / 2, 32, batch_size)
+				"l2" => zeros(Float32, image_size[1] ÷ 2, image_size[2] ÷ 2, 32, batch_size)
 				)
 		if usegpu
 			hidden = Dict(key => gpu(val) for (key, val) in pairs(hidden))
