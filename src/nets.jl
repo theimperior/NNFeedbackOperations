@@ -1,4 +1,3 @@
-module nets
 """
 Author: Sebastian Vendt, University of Ulm
 
@@ -61,8 +60,8 @@ const model_save_location = "../trainedModels/"
 const log_save_location = "../logs/"
 # end of parameters
 
-# activate debugging with JULIA_DEBUG=$(filename) or with keyword all 
-
+# DEBUGGING
+# activate debugging with JULIA_DEBUG=modulename, with keyword all for all files or Main for this script only
 # add DEBUG_ to log file name when debugging is active 
 debug_str = ""
 @debug begin
@@ -253,4 +252,3 @@ for model_name in FBModel_names
 	close(io)
 end
 
-end # module nets
