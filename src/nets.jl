@@ -62,15 +62,11 @@ const log_save_location = "../logs/"
 # end of parameters
 
 # activate debugging with JULIA_DEBUG=$(filename) or with keyword all 
-# dump all variables when debugging is active 
-for symbol in names(Main)
-    str = "$(symbol) = $(eval(symbol))"
-    @debug str
-end
 
 # add DEBUG_ to log file name when debugging is active 
 debug_str = ""
 @debug begin
+	global debug_str
 	debug_str = "DEBUG_"
 	"------DEBUGGING ACTIVATED------"
 end
@@ -203,6 +199,11 @@ for model_name in FFModel_names
 	io = open("$(log_save_location)$(debug_str)log_$(model_name).log", "a+")
 	global_logger(SimpleLogger(io)) # for debug outputs
 	@printf(io, "\n--------[%s %s]--------\n", Dates.format(now(), date_format), Dates.format(now(), time_format))
+	# dump configuration 
+	for symbol in names(Main)
+		str = "$(symbol) = $(eval(symbol))"
+		@debug str
+	end
 	for dataset_name in dataset_names
 		@printf(io, "[%s] Training %s with %s\n", Dates.format(now(), time_format), model_name, dataset_name)
 		(train_set, validation_set, test_set) = load_dataset(dataset_name)
@@ -223,6 +224,11 @@ for model_name in FBModel_names
 	io = open("$(log_save_location)$(debug_str)log_$(model_name).log", "a+")
 	global_logger(SimpleLogger(io)) # for debug outputs
 	@printf(io, "\n--------[%s %s]--------\n", Dates.format(now(), date_format), Dates.format(now(), time_format))
+	# dump configuration 
+	for symbol in names(Main)
+		str = "$(symbol) = $(eval(symbol))"
+		@debug str
+	end
 	for dataset_name in dataset_names
 		@printf(io, "[%s] Training %s with %s\n", Dates.format(now(), time_format), model_name, dataset_name)
 		(train_set, validation_set, test_set) = load_dataset(dataset_name)
