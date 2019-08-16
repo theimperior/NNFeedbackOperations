@@ -1,3 +1,4 @@
+module nets
 """
 Author: Sebastian Vendt, University of Ulm
 
@@ -137,7 +138,7 @@ function trainReccurentNet(model, train_set, test_set, model_name::String, datas
 	function loss(dataset)
 		loss_val = 0.0f0
 		for (data, labels) in dataset
-			loss_val += loss(data, labels)
+			loss_val += Tracker.data(loss(data, labels))
 		end
 		return loss_val / length(dataset)
 	end
@@ -245,3 +246,5 @@ for model_name in FBModel_names
 	end
 	close(io)
 end
+
+end # module nets

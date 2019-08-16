@@ -1,3 +1,4 @@
+module evaluator
 include("/home/svendt/NNFeedbackOperations/Src/dataManager.jl")
 include("/home/svendt/NNFeedbackOperations/Src/accuracy.jl")
 using .dataManager: make_batch
@@ -368,3 +369,4 @@ for model_pair in pairwise_tests
 	FDR_control!(nh, FDR)
 	print_results(nh, "statistical significant diff in model robustness")	
 end
+end # module evaluator
