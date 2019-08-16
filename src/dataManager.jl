@@ -65,8 +65,8 @@ function make_batch(filepath, filenames...; batch_size=100, normalize_imgs=true,
     # rearrange binary targets: targetarray(10) x batchsize(Setsize)
     bin_targets = permutedims(bin_targets, (2, 1))
    
-    @debug("Dimension of images $(size(images, 1)) x $(size(images, 2)) x $(size(images, 3)) x $(size(images, 4))")
-    @debug("Dimension of binary targets $(size(bin_targets)) x $(size(bin_targets))")
+    @debug("Dimension of images $(size(images))")
+    @debug("Dimension of targets $(size(bin_targets))")
     
     
     images = convert(Array{Float64}, images) 
@@ -84,10 +84,10 @@ function make_batch(filepath, filenames...; batch_size=100, normalize_imgs=true,
     # display one sample of the images depends on PyPlot!
     # matshow(dropdims(images[:,:,:,10], dims=3), cmap=PyPlot.cm.gray, vmin=0, vmax=255)
 	
-	 if ( batch_size == -1 ) 
-	    batch_size = size(images, 4)
-	 end
-    @debug("Creating batches")
+	if ( batch_size == -1 ) 
+	   batch_size = size(images, 4)
+	end
+	
     idxsets = partition(1:size(images, 4), batch_size)
     train_set = [make_minibatch(images, bin_targets, i) for i in idxsets];
     
@@ -95,49 +95,50 @@ function make_batch(filepath, filenames...; batch_size=100, normalize_imgs=true,
 end # function make_batch
 
 
-function load_MNIST(;batch_size=100, normalize_imgs=true, truncate_imgs=true)
+function make_MNIST_batch(;batch_size=100, normalize_imgs=true, truncate_imgs=true, create_validation_set=false)
 	@debug("loading MNIST dataset")
-		
 	# process __train__ images
 	mnist_trainlabels = MNIST.labels()
 	mnist_trainimgs = MNIST.images()
-	# reshape array to 28 x 28 x batchsize
-	train_imgs = zeros(28, 28, 1, size(mnist_trainimgs, 1))
-	for i in 1:size(mnist_trainimgs, 1)
-		train_imgs[:,:,:,i] = mnist_trainimgs[i]
+	if(create_validation_set)
+		train_set, t1, t2 = make_MNIST_minibatch(mnist_trainimgs[1:end-10000], mnist_trainlabels[1:end-10000], normalize_imgs)
+		validation_set, t1, t2 = make_MNIST_minibatch(mnist_trainimgs[end-10000+1:end], mnist_trainlabels[end-10000+1:end], normalize_imgs)
+	else 
+		train_set, t1, t2 = make_MNIST_minibatch(mnist_trainimgs, mnist_trainlabels, normalize_imgs)
+		validation_set = []
 	end
-
-	if(normalize_imgs)
-	   mean_img, std_img = normalizePixelwise!(train_imgs, truncate=truncate_imgs)
-   end
-	
-	bin_train_targets = convert(Array{Float32}, onehotbatch(mnist_trainlabels, 0:9))
-	train_imgs = convert(Array{Float32}, train_imgs) 
-	
-	@debug("Creating train batches")
-	idxsets = partition(1:size(train_imgs, 4), batch_size)
-	train_set = [make_minibatch(train_imgs, bin_train_targets, i) for i in idxsets]
 	
 	# process __test__ images
 	mnist_testlabels = MNIST.labels(:test)
 	mnist_testimgs = MNIST.images(:test)
+	test_set, t1, t2 = make_MNIST_minibatch(mnist_testimgs, mnist_testlabels, normalize_imgs)
+	
+	return train_set, validation_set, test_set
+end # function make_MNIST_batch 
+
+function make_MNIST_minibatch(mnist_imgs, mnist_labels, normalize_imgs)
 	# reshape array to 28 x 28 x batchsize
-	test_imgs = zeros(28, 28, 1, size(mnist_testimgs, 1))
-	for i in 1:size(mnist_testimgs, 1)
-		test_imgs[:,:,:,i] = mnist_testimgs[i]
+	imgs = zeros(28, 28, 1, size(mnist_imgs, 1))
+	for i in 1:size(mnist_imgs, 1)
+		imgs[:,:,:,i] = mnist_imgs[i]
+	end
+	# size(imgs) = (28, 28, 1, 60000) for the train set without validation! 
+	
+	if(normalize_imgs)
+		mean_img, std_img = normalizePixelwise!(imgs)
 	end
 	
-	mean_img, std_img = normalizePixelwise!(test_imgs)
+	bin_mnist_labels = convert(Array{Float32}, onehotbatch(mnist_labels, 0:9))
+	imgs = convert(Array{Float32}, imgs) 
 	
-	bin_test_targets = convert(Array{Float32}, onehotbatch(mnist_testlabels, 0:9))
-	test_imgs = convert(Array{Float32}, test_imgs) 
+	@debug("Dimension of images $(size(imgs))")
+    @debug("Dimension of labels $(size(mnist_labels))")
 	
-	@debug("Creating test batches")
-	idxsets = partition(1:size(test_imgs, 4), batch_size)
-	test_set = [make_minibatch(test_imgs, bin_test_targets, i) for i in idxsets]
+	idxsets = partition(1:size(imgs, 4), batch_size)
+	data_set = [make_minibatch(imgs, bin_mnist_labels, i) for i in idxsets]
 	
-	return train_set, test_set
-end
+	return data_set, mean_img, std_img
+end # function make_MNIST_minibatch
 
 """
 normalize input images along the batch dimension
