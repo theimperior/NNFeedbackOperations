@@ -44,6 +44,7 @@ const time_steps = 4
 const usegpu = true
 const printout_interval = 1
 const time_format = "HH:MM:SS"
+const date_format = "dd_mm_yyyy"
 image_size = (32, 32) # MNIST is using 28, 28
 # enter the datasets and models you want to train
 const dataset_names = ["MNIST"] # ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits", "MNIST"]
@@ -200,7 +201,7 @@ for model_name in FFModel_names
 	global io
 	io = open("$(log_save_location)$(debug_str)log_$(model_name).log", "a+")
 	global_logger(SimpleLogger(io)) # for debug outputs
-	@printf(io, "\n--------$(Dates.format(now(), "dd_mm_yyyy"))--------\n")
+	@printf(io, "\n--------[%s %s]--------\n", Dates.format(now(), date_format), Dates.format(now(), time_format))
 	for dataset_name in dataset_names
 		@printf(io, "[%s] Training %s with %s\n", Dates.format(now(), time_format), model_name, dataset_name)
 		(train_set, validation_set, test_set) = load_dataset(dataset_name)
@@ -220,7 +221,7 @@ for model_name in FBModel_names
 	global io
 	io = open("$(log_save_location)$(debug_str)log_$(model_name).log", "a+")
 	global_logger(SimpleLogger(io)) # for debug outputs
-	@printf(io, "\n--------$(Dates.format(now(), "dd_mm_yyyy"))--------\n")
+	@printf(io, "\n--------[%s %s]--------\n", Dates.format(now(), date_format), Dates.format(now(), time_format))
 	for dataset_name in dataset_names
 		@printf(io, "[%s] Training %s with %s\n", Dates.format(now(), time_format), model_name, dataset_name)
 		(train_set, validation_set, test_set) = load_dataset(dataset_name)
