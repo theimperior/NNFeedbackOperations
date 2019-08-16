@@ -101,22 +101,35 @@ function make_MNIST_batch(;batch_size=100, normalize_imgs=true, truncate_imgs=tr
 	mnist_trainlabels = MNIST.labels()
 	mnist_trainimgs = MNIST.images()
 	if(create_validation_set)
-		train_set, t1, t2 = make_MNIST_minibatch(mnist_trainimgs[1:end-10000], mnist_trainlabels[1:end-10000], normalize_imgs)
-		validation_set, t1, t2 = make_MNIST_minibatch(mnist_trainimgs[end-10000+1:end], mnist_trainlabels[end-10000+1:end], normalize_imgs)
+		if ( batch_size == -1 ) 
+		   batch_size = size(mnist_trainimgs[1:end-10000], 1)
+		end
+		train_set, t1, t2 = make_MNIST_minibatch(batch_size, mnist_trainimgs[1:end-10000], mnist_trainlabels[1:end-10000], normalize_imgs, truncate_imgs)
+		
+		if ( batch_size == -1 ) 
+		   batch_size = size(mnist_trainimgs[end-10000+1:end], 1)
+		end
+		validation_set, t1, t2 = make_MNIST_minibatch(batch_size, mnist_trainimgs[end-10000+1:end], mnist_trainlabels[end-10000+1:end], normalize_imgs, truncate_imgs)
 	else 
-		train_set, t1, t2 = make_MNIST_minibatch(mnist_trainimgs, mnist_trainlabels, normalize_imgs)
+		if ( batch_size == -1 ) 
+		   batch_size = size(mnist_trainimgs, 1)
+		end
+		train_set, t1, t2 = make_MNIST_minibatch(batch_size, mnist_trainimgs, mnist_trainlabels, normalize_imgs, truncate_imgs)
 		validation_set = []
 	end
 	
 	# process __test__ images
 	mnist_testlabels = MNIST.labels(:test)
 	mnist_testimgs = MNIST.images(:test)
-	test_set, t1, t2 = make_MNIST_minibatch(mnist_testimgs, mnist_testlabels, normalize_imgs)
+	if ( batch_size == -1 ) 
+		batch_size = size(mnist_testimgs, 1)
+	end
+	test_set, t1, t2 = make_MNIST_minibatch(batch_size, mnist_testimgs, mnist_testlabels, normalize_imgs, truncate_imgs)
 	
 	return train_set, validation_set, test_set
 end # function make_MNIST_batch 
 
-function make_MNIST_minibatch(mnist_imgs, mnist_labels, normalize_imgs)
+function make_MNIST_minibatch(batch_size, mnist_imgs, mnist_labels, normalize_imgs, truncate_imgs)
 	# reshape array to 28 x 28 x batchsize
 	imgs = zeros(28, 28, 1, size(mnist_imgs, 1))
 	for i in 1:size(mnist_imgs, 1)
@@ -125,7 +138,7 @@ function make_MNIST_minibatch(mnist_imgs, mnist_labels, normalize_imgs)
 	# size(imgs) = (28, 28, 1, 60000) for the train set without validation! 
 	
 	if(normalize_imgs)
-		mean_img, std_img = normalizePixelwise!(imgs)
+		mean_img, std_img = normalizePixelwise!(imgs, truncate_imgs)
 	end
 	
 	bin_mnist_labels = convert(Array{Float32}, onehotbatch(mnist_labels, 0:9))
@@ -145,7 +158,7 @@ normalize input images along the batch dimension
 input should have standart flux order: Widht x height x channels x batchsize
 if truncate is set to true the last 1% beyond 2.576 sigma will be clipped to 2.576 sigma
 """
-function normalizePixelwise!(images; truncate=true)
+function normalizePixelwise!(images, truncate)
 	mean_img = mean(images, dims=4)
     std_img = std(images, mean=mean_img, dims=4)
 	
