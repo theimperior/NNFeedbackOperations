@@ -34,16 +34,15 @@ norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T))
 const batch_size = 100
 const momentum = 0.9f0
 const lambda = 0.0005f0
-init_learning_rate = 0.1f0
+init_learning_rate = 1f0 # testing with 1, 0.3, 0.1, 0.03, 0.01, 0.002, 0.001, 0.0002, 0.0001
 learning_rate = init_learning_rate
-const epochs = 100
+const epochs = 12
 const decay_rate = 0.1f0
 const decay_step = 40
 # number of timesteps the network is unrolled
 const time_steps = 4
 const usegpu = true
-const printout_interval = 5
-const save_interval = 25
+const printout_interval = 1
 const time_format = "HH:MM:SS"
 image_size = (32, 32) # MNIST is using 28, 28
 # enter the datasets and models you want to train
@@ -106,10 +105,12 @@ function load_dataset(dataset_name)
 		train_set, mean_img, std_img = make_batch(train_folderpath, train_filenames..., batch_size=batch_size)
 		# test_set needs to have the same batchsize as the train_set due to model state init
 		test_set, tmp1, tmp2 = make_batch(test_folderpath, test_filenames..., batch_size=batch_size)
+		validation_set = []
 	end
 	
 	if usegpu
 		train_set = gpu.(train_set)
+		validation_set = gpu.(validation_set)
 		test_set = gpu.(test_set)
 	end
 
@@ -117,7 +118,7 @@ function load_dataset(dataset_name)
 	@debug("loaded $(length(validation_set)) batches of size $(size(validation_set[1][1], 4)) for validation")
 	@debug("loaded $(length(test_set)) batches of size $(size(test_set[1][1], 4)) for testing")
 	
-	return (train_set, test_set)
+	return (train_set, validation_set, test_set)
 end
 
 function trainReccurentNet(model, train_set, test_set, model_name::String, dataset_name::String)
@@ -197,17 +198,18 @@ FBModels = Dict( "BTModel" => :spoerer_model_bt,
 for model_name in FFModel_names
 	# create a own log file for every model and all datasets
 	global io
-	io = open("$(log_save_location)$(debug_str)log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
+	io = open("$(log_save_location)$(debug_str)log_$(model_name).log", "a+")
 	global_logger(SimpleLogger(io)) # for debug outputs
+	@printf(io, "\n--------$(Dates.format(now(), "dd_mm_yyyy"))--------\n")
 	for dataset_name in dataset_names
-		@printf(io, "Training %s with %s\n", model_name, dataset_name)
-		(train_set, test_set) = load_dataset(dataset_name)
+		@printf(io, "[%s] Training %s with %s\n", Dates.format(now(), time_format), model_name, dataset_name)
+		(train_set, validation_set, test_set) = load_dataset(dataset_name)
 		
 		# make sure the model gets recreated for every new dataset
 		model = eval(get(FFModels, model_name, nothing))(Float32, inputsize=image_size)
 		if (usegpu) model = gpu(model) end
 		
-		best_acc = trainFeedforwardNet(model, train_set, test_set, model_name, dataset_name)
+		best_acc = trainFeedforwardNet(model, train_set, validation_set, model_name, dataset_name)
 		model = cpu(model)
 		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" model best_acc
 	end
@@ -216,11 +218,12 @@ end
 
 for model_name in FBModel_names
 	global io
-	io = open("$(log_save_location)$(debug_str)log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
+	io = open("$(log_save_location)$(debug_str)log_$(model_name).log", "a+")
 	global_logger(SimpleLogger(io)) # for debug outputs
+	@printf(io, "\n--------$(Dates.format(now(), "dd_mm_yyyy"))--------\n")
 	for dataset_name in dataset_names
-		@printf(io, "Training %s with %s\n", model_name, dataset_name)
-		(train_set, test_set) = load_dataset(dataset_name)
+		@printf(io, "[%s] Training %s with %s\n", Dates.format(now(), time_format), model_name, dataset_name)
+		(train_set, validation_set, test_set) = load_dataset(dataset_name)
 		
 		# make sure the model gets recreated for every new dataset
 		hidden = Dict(
@@ -235,7 +238,7 @@ for model_name in FBModel_names
 		model = Flux.Recur(chain, hidden)
 		if (usegpu) model = gpu(model) end
 		
-		best_acc = trainReccurentNet(model, train_set, test_set, model_name, dataset_name)
+		best_acc = trainReccurentNet(model, train_set, validation_set, model_name, dataset_name)
 		model = cpu(model)
 		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" model best_acc
 	end
