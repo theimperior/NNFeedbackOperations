@@ -40,8 +40,6 @@ Structure of the .mat file:
   bin_targets | N x 10
 
 where N denotes the number of samples
-
-TODO batch_size = -1 in this case create only one batch out of the data with lenght of the data
 """
 function make_batch(filepath, filenames...; batch_size=100, normalize_imgs=true, truncate_imgs=true)
     images = Array{Float64}(undef, 0)
@@ -153,7 +151,7 @@ function normalizePixelwise!(images; truncate=true)
 	setsize = size(images, 4)
     
 	@debug("normalize dataset")
-	std_img_tmp = std_img
+	std_img_tmp = copy(std_img)
 	std_img_tmp[std_img_tmp .== 0] .= 1
 	for i in 1:setsize
 		images[:, :, :, i] = (images[:, :, :, i] - mean_img) ./ std_img_tmp
