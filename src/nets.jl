@@ -21,7 +21,7 @@ using NNlib
 using FeedbackNets
 include("./dataManager.jl")
 include("./accuracy.jl")
-using .dataManager: make_batch, make_minibatch, load_MNIST
+using .dataManager: make_batch, make_minibatch, make_MNIST_batch
 using .accuracy: binarycrossentropy, recur_accuracy, ff_accuracy
 using Logging
 import LinearAlgebra: norm
@@ -59,6 +59,19 @@ test_folderpath_digits = "../digitclutter/digitclutter/testset/mat/"
 const model_save_location = "../trainedModels/"
 const log_save_location = "../logs/"
 # end of parameters
+# activate debugging with JULIA_DEBUG=$(filename) or with keyword all 
+for symbol in names(Main)
+    str = "$(symbol) = $(eval(symbol))"
+    @debug str
+end
+
+# when debugging is active, debug is added to the file name
+debug_str = ""
+@debug begin
+	debug_str = "DEBUG_"
+	"------DEBUGGING ACTIVATED------"
+end
+
 
 io = nothing
 
@@ -75,7 +88,7 @@ function load_dataset(dataset_name)
 	
 	if(dataset_name == "MNIST")
 		image_size = (28,28)
-		train_set, test_set = load_MNIST()
+		train_set, validation_set, test_set = make_MNIST_batch(create_validation_set=true)
 	else
 		image_size = (32, 32)
 		# generate filenames 
@@ -147,6 +160,8 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
 		end
 		# TODO store intermediate model or load if it already exists, one needs to find a good solution not to move the model on the cpu store it and then move it back to the gpu 
     end
+	# TODO print in training the actual accuracy across the training set and the actual loss across the training set
+	# return the accuracy across the test set
     return ff_accuracy(model, test_set, dataset_name)
 end
 
@@ -163,7 +178,7 @@ FBModels = Dict( "BTModel" => :spoerer_model_bt,
 for model_name in FFModel_names
 	# create a own log file for every model and all datasets
 	global io
-	io = open("$(log_save_location)log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
+	io = open("$(log_save_location)$(debug_str)log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
 	global_logger(SimpleLogger(io)) # for debug outputs
 	for dataset_name in dataset_names
 		@printf(io, "Training %s with %s\n", model_name, dataset_name)
@@ -182,7 +197,7 @@ end
 
 for model_name in FBModel_names
 	global io
-	io = open("$(log_save_location)log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
+	io = open("$(log_save_location)$(debug_str)log_$(Dates.format(now(), "dd_mm"))_$(model_name).log", "w+")
 	global_logger(SimpleLogger(io)) # for debug outputs
 	for dataset_name in dataset_names
 		@printf(io, "Training %s with %s\n", model_name, dataset_name)
