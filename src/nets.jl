@@ -199,7 +199,7 @@ for model_name in FFModel_names
 	global_logger(SimpleLogger(io)) # for debug outputs
 	@printf(io, "\n--------[%s %s]--------\n", Dates.format(now(), date_format), Dates.format(now(), time_format))
 	# dump configuration 
-	for symbol in names(nets)
+	for symbol in names(Main)
 		str = "$(symbol) = $(eval(symbol))"
 		@debug str
 	end
@@ -224,7 +224,7 @@ for model_name in FBModel_names
 	global_logger(SimpleLogger(io)) # for debug outputs
 	@printf(io, "\n--------[%s %s]--------\n", Dates.format(now(), date_format), Dates.format(now(), time_format))
 	# dump configuration 
-	for symbol in names(nets)
+	for symbol in names(Main)
 		str = "$(symbol) = $(eval(symbol))"
 		@debug str
 	end
