@@ -59,19 +59,20 @@ test_folderpath_digits = "../digitclutter/digitclutter/testset/mat/"
 const model_save_location = "../trainedModels/"
 const log_save_location = "../logs/"
 # end of parameters
+
 # activate debugging with JULIA_DEBUG=$(filename) or with keyword all 
+# dump all variables when debugging is active 
 for symbol in names(Main)
     str = "$(symbol) = $(eval(symbol))"
     @debug str
 end
 
-# when debugging is active, debug is added to the file name
+# add DEBUG_ to log file name when debugging is active 
 debug_str = ""
 @debug begin
 	debug_str = "DEBUG_"
 	"------DEBUGGING ACTIVATED------"
 end
-
 
 io = nothing
 
@@ -113,6 +114,7 @@ function load_dataset(dataset_name)
 	end
 
 	@debug("loaded $(length(train_set)) batches of size $(size(train_set[1][1], 4)) for training")
+	@debug("loaded $(length(validation_set)) batches of size $(size(validation_set[1][1], 4)) for validation")
 	@debug("loaded $(length(test_set)) batches of size $(size(test_set[1][1], 4)) for testing")
 	
 	return (train_set, test_set)
@@ -129,17 +131,26 @@ function trainReccurentNet(model, train_set, test_set, model_name::String, datas
 		loss_val += lambda * sum(norm, params(model))
         return loss_val
     end
+	
+	function loss(dataset)
+		loss_val = 0.0f0
+		for (data, labels) in dataset
+			loss_val += loss(data, labels)
+		end
+		return loss_val / length(dataset)
+	end
     
     opt = Momentum(learning_rate, momentum)
-	@printf(io, "[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), time_format), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+	@printf(io, "[%s] INIT with Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set)) 
     for i in 1:epochs
         flush(io)
 		Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if ( rem(i, printout_interval) == 0 )
-			@printf(io, "[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), time_format), i, recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set[1][1], test_set[1][2]))
+			@printf(io, "[%s] Epoch %3d: Accuracy: %.4f, Loss: %f\n", Dates.format(now(), time_format), i, recur_accuracy(model, train_set, time_steps, dataset_name), loss(train_set))
 		end
     end
+	@printf(io, "[%s] FINAL with Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set)) 
     return recur_accuracy(model, test_set, time_steps, dataset_name)
 end
 
@@ -148,19 +159,27 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
 		y_hat = model(x)
 		return binarycrossentropy(y_hat, y) + lambda * sum(norm, params(model))
 	end
+	
+	function loss(dataset)
+		loss_val = 0.0f0
+		for (data, labels) in dataset
+			loss_val += loss(data, labels)
+		end
+		return loss_val / length(dataset)
+	end
     
     opt = Momentum(learning_rate, momentum)
-	@printf(io, "[%s] INIT with Accuracy: %f and Loss: %f\n", Dates.format(now(), time_format), ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+	@printf(io, "[%s] INIT with Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), ff_accuracy(model, test_set, dataset_name), loss(test_set)) 
     for i in 1:epochs
 		flush(io)
         Flux.train!(loss, params(model), train_set, opt)
         opt.eta = adapt_learnrate(i)
         if ( rem(i, printout_interval) == 0 ) 
-			@printf(io, "[%s] Epoch %d: Accuracy: %f, Loss: %f\n", Dates.format(now(), time_format), i, ff_accuracy(model, test_set, dataset_name), loss(test_set[1][1], test_set[1][2])) 
+			@printf(io, "[%s] Epoch %3d: Accuracy: %.4f, Loss: %f\n", Dates.format(now(), time_format), i, ff_accuracy(model, train_set, dataset_name), loss(train_set)) 
 		end
 		# TODO store intermediate model or load if it already exists, one needs to find a good solution not to move the model on the cpu store it and then move it back to the gpu 
     end
-	# TODO print in training the actual accuracy across the training set and the actual loss across the training set
+	@printf(io, "[%s] FINAL with Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), ff_accuracy(model, test_set, dataset_name), loss(test_set)) 
 	# return the accuracy across the test set
     return ff_accuracy(model, test_set, dataset_name)
 end
