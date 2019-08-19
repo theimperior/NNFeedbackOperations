@@ -34,9 +34,9 @@ norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T))
 const batch_size = 100
 const momentum = 0.9f0
 const lambda = 0.0005f0
-init_learning_rate = 1f0 # testing with 1, 0.3, 0.1, 0.03, 0.01, 0.002, 0.001, 0.0002, 0.0001
+init_learning_rate = 0.1f0 
 learning_rate = init_learning_rate
-const epochs = 12
+epochs = 100
 const decay_rate = 0.1f0
 const decay_step = 40
 # number of timesteps the network is unrolled
@@ -47,9 +47,9 @@ const time_format = "HH:MM:SS"
 const date_format = "dd_mm_yyyy"
 image_size = (32, 32) # MNIST is using 28, 28
 # enter the datasets and models you want to train
-const dataset_names = ["MNIST"] # ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits", "MNIST"]
-const FFModel_names = [] # ["BModel", "BKModel", "BFModel"]
-const FBModel_names = ["BTModel", "BLModel", "BLTModel"] # ["BTModel", "BLModel", "BLTModel"]
+dataset_names = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits", "MNIST"]
+FFModel_names = ["BModel", "BKModel", "BFModel"]
+FBModel_names = ["BTModel", "BLModel", "BLTModel"]
 
 train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
 train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
@@ -76,9 +76,19 @@ if usegpu
     using CuArrays
 end
 
-# check if learning_rate is given as argument 
+# Usage:
+# ARG1 learning rate
+# ARG2 epochs
+# ARG3 dataset names
+# ARG4 ff model names
+# ARG5 fb model names
+ 
 if (length(ARGS) > 0)
 	init_learning_rate = parse(Float32, ARGS[1])
+	epochs = parse(Int32, ARGS[2])
+	dataset_names = convert.(String, split(ARGS[3]))
+	FFModel_names = convert.(String, split(ARGS[4]))
+	FBModel_names = convert.(String, split(ARGS[5]))
 end
 
 function adapt_learnrate(epoch_idx)
