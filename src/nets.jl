@@ -76,6 +76,11 @@ if usegpu
     using CuArrays
 end
 
+# check if learning_rate is given as argument 
+if (length(ARGS) > 0)
+	init_learning_rate = parse(Float32, ARGS[1])
+end
+
 function adapt_learnrate(epoch_idx)
     return init_learning_rate * decay_rate^(epoch_idx / decay_step)
 end
@@ -195,15 +200,21 @@ FBModels = Dict( "BTModel" => :spoerer_model_bt,
 for model_name in FFModel_names
 	# create a own log file for every model and all datasets
 	global io
-	io = open("$(log_save_location)$(debug_str)log_$(model_name).log", "a+")
+	fp = "$(log_save_location)$(debug_str)log_$(model_name).log"
+	io = open(fp, "a+")
 	global_logger(SimpleLogger(io)) # for debug outputs
+	@printf(Base.stdout, "Logging to File: %s", fp)
 	@printf(io, "\n--------[%s %s]--------\n", Dates.format(now(), date_format), Dates.format(now(), time_format))
 	# dump configuration 
-	for symbol in names(Main)
-		str = "$(symbol) = $(eval(symbol))"
-		@debug str
+	@debug begin
+		for symbol in names(Main)
+			var = "$(symbol) = $(eval(symbol))"
+			@printf(io, "%s\n", var)
+		end
+		"--------End of VAR DUMP--------"
 	end
 	flush(io)
+	flush(Base.stdout)
 	for dataset_name in dataset_names
 		@printf(io, "[%s] Training %s with %s\n", Dates.format(now(), time_format), model_name, dataset_name)
 		(train_set, validation_set, test_set) = load_dataset(dataset_name)
@@ -221,15 +232,21 @@ end
 
 for model_name in FBModel_names
 	global io
-	io = open("$(log_save_location)$(debug_str)log_$(model_name).log", "a+")
+	fp = "$(log_save_location)$(debug_str)log_$(model_name).log"
+	io = open(fp, "a+")
 	global_logger(SimpleLogger(io)) # for debug outputs
+	@printf(Base.stdout, "Logging to File: %s", fp)
 	@printf(io, "\n--------[%s %s]--------\n", Dates.format(now(), date_format), Dates.format(now(), time_format))
 	# dump configuration 
-	for symbol in names(Main)
-		str = "$(symbol) = $(eval(symbol))"
-		@debug str
+	@debug begin
+		for symbol in names(Main)
+			var = "$(symbol) = $(eval(symbol))"
+			@printf(io, "%s\n", var)
+		end
+		"--------End of VAR DUMP--------"
 	end
 	flush(io)
+	flush(Base.stdout)
 	for dataset_name in dataset_names
 		@printf(io, "[%s] Training %s with %s\n", Dates.format(now(), time_format), model_name, dataset_name)
 		(train_set, validation_set, test_set) = load_dataset(dataset_name)
