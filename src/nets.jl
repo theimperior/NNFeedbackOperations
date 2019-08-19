@@ -35,7 +35,6 @@ const batch_size = 100
 const momentum = 0.9f0
 const lambda = 0.0005f0
 init_learning_rate = 0.1f0 
-learning_rate = init_learning_rate
 epochs = 100
 const decay_rate = 0.1f0
 const decay_step = 40
@@ -153,7 +152,7 @@ function trainReccurentNet(model, train_set, test_set, model_name::String, datas
 		return loss_val / length(dataset)
 	end
     
-    opt = Momentum(learning_rate, momentum)
+    opt = Momentum(init_learning_rate, momentum)
 	@printf(io, "[%s] INIT with Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set)) 
     for i in 1:epochs
         flush(io)
@@ -181,7 +180,7 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
 		return loss_val / length(dataset)
 	end
     
-    opt = Momentum(learning_rate, momentum)
+    opt = Momentum(init_learning_rate, momentum)
 	@printf(io, "[%s] INIT with Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), ff_accuracy(model, test_set, dataset_name), loss(test_set)) 
     for i in 1:epochs
 		flush(io)
