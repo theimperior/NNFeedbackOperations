@@ -203,6 +203,7 @@ for model_name in FFModel_names
 		str = "$(symbol) = $(eval(symbol))"
 		@debug str
 	end
+	flush(io)
 	for dataset_name in dataset_names
 		@printf(io, "[%s] Training %s with %s\n", Dates.format(now(), time_format), model_name, dataset_name)
 		(train_set, validation_set, test_set) = load_dataset(dataset_name)
@@ -228,6 +229,7 @@ for model_name in FBModel_names
 		str = "$(symbol) = $(eval(symbol))"
 		@debug str
 	end
+	flush(io)
 	for dataset_name in dataset_names
 		@printf(io, "[%s] Training %s with %s\n", Dates.format(now(), time_format), model_name, dataset_name)
 		(train_set, validation_set, test_set) = load_dataset(dataset_name)
