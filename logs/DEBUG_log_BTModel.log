@@ -1,0 +1,206 @@
+
+--------[19_08_2019 23:53:31]--------
+Base = Base
+Core = Core
+FBModel_names = ["BTModel"]
+FBModels = Dict("BTModel"=>:spoerer_model_bt,"BLModel"=>:spoerer_model_bl,"BLTModel"=>:spoerer_model_blt)
+FFModel_names = String[]
+FFModels = Dict("BFModel"=>:spoerer_model_bf,"BKModel"=>:spoerer_model_bk,"BModel"=>:spoerer_model_b)
+Main = Main
+accuracy = Main.accuracy
+adapt_learnrate = adapt_learnrate
+batch_size = 100
+dataManager = Main.dataManager
+dataset_names = ["MNIST"]
+date_format = dd_mm_yyyy
+debug_str = DEBUG_
+decay_rate = 0.1
+decay_step = 40
+epochs = 35
+image_size = (32, 32)
+init_learning_rate = 0.03
+io = IOStream(<file ../logs/DEBUG_log_BTModel.log>)
+lambda = 0.0005
+load_dataset = load_dataset
+log_save_location = ../logs/
+model_save_location = ../trainedModels/
+momentum = 0.9
+printout_interval = 1
+test_folderpath_debris = ../digitclutter/digitdebris/testset/mat/
+test_folderpath_digits = ../digitclutter/digitclutter/testset/mat/
+time_format = HH:MM:SS
+time_steps = 4
+trainFeedforwardNet = trainFeedforwardNet
+trainReccurentNet = trainReccurentNet
+train_folderpath_debris = ../digitclutter/digitdebris/trainset/mat/
+train_folderpath_digits = ../digitclutter/digitclutter/trainset/mat/
+usegpu = true
+┌ Debug: --------End of VAR DUMP--------
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:250
+[23:53:33] Training BTModel with MNIST
+┌ Debug: loading MNIST dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:99
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 50000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (50000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: loaded 500 batches of size 100 for training
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:128
+┌ Debug: loaded 100 batches of size 100 for validation
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:129
+┌ Debug: loaded 100 batches of size 100 for testing
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:130
+[23:54:34] INIT with Accuracy(test_set): 0.0961 and Loss(test_set): 0.649013
+[23:58:39] Epoch   1: Accuracy: 0.3911, Loss: 0.319881
+[00:02:19] Epoch   2: Accuracy: 0.5340, Loss: 0.284910
+[00:06:00] Epoch   3: Accuracy: 0.5957, Loss: 0.261703
+[00:09:40] Epoch   4: Accuracy: 0.6970, Loss: 0.232580
+[00:13:21] Epoch   5: Accuracy: 0.7478, Loss: 0.218069
+[00:17:00] Epoch   6: Accuracy: 0.7845, Loss: 0.203882
+[00:20:40] Epoch   7: Accuracy: 0.7958, Loss: 0.196282
+[00:24:20] Epoch   8: Accuracy: 0.8169, Loss: 0.188900
+[00:28:08] Epoch   9: Accuracy: 0.8392, Loss: 0.181939
+[00:31:53] Epoch  10: Accuracy: 0.8430, Loss: 0.177291
+[00:35:45] Epoch  11: Accuracy: 0.8573, Loss: 0.172784
+[00:39:27] Epoch  12: Accuracy: 0.8659, Loss: 0.167331
+[00:43:09] Epoch  13: Accuracy: 0.8773, Loss: 0.163618
+[00:47:07] Epoch  14: Accuracy: 0.8764, Loss: 0.166332
+[00:51:05] Epoch  15: Accuracy: 0.8856, Loss: 0.161403
+[00:55:05] Epoch  16: Accuracy: 0.8856, Loss: 0.158973
+[00:59:04] Epoch  17: Accuracy: 0.8921, Loss: 0.156577
+[01:03:03] Epoch  18: Accuracy: 0.9002, Loss: 0.154615
+[01:07:04] Epoch  19: Accuracy: 0.9039, Loss: 0.151688
+[01:11:00] Epoch  20: Accuracy: 0.9042, Loss: 0.150489
+[01:15:01] Epoch  21: Accuracy: 0.9030, Loss: 0.149885
+[01:19:00] Epoch  22: Accuracy: 0.9109, Loss: 0.147739
+[01:22:57] Epoch  23: Accuracy: 0.9114, Loss: 0.147559
+[01:27:01] Epoch  24: Accuracy: 0.9105, Loss: 0.147548
+[01:31:07] Epoch  25: Accuracy: 0.9140, Loss: 0.146799
+[01:35:13] Epoch  26: Accuracy: 0.9110, Loss: 0.145661
+[01:39:09] Epoch  27: Accuracy: 0.9149, Loss: 0.144396
+[01:43:11] Epoch  28: Accuracy: 0.9151, Loss: 0.143909
+[01:47:12] Epoch  29: Accuracy: 0.9151, Loss: 0.143840
+[01:51:12] Epoch  30: Accuracy: 0.9190, Loss: 0.142081
+[01:55:14] Epoch  31: Accuracy: 0.9163, Loss: 0.143052
+[01:59:14] Epoch  32: Accuracy: 0.9198, Loss: 0.142076
+[02:03:23] Epoch  33: Accuracy: 0.9218, Loss: 0.141143
+[02:07:24] Epoch  34: Accuracy: 0.9200, Loss: 0.140907
+[02:11:34] Epoch  35: Accuracy: 0.9229, Loss: 0.140452
+[02:13:51] FINAL with Accuracy(test_set): 0.9288 and Loss(test_set): 0.136892
+
+--------[20_08_2019 02:16:00]--------
+Base = Base
+Core = Core
+FBModel_names = ["BTModel"]
+FBModels = Dict("BTModel"=>:spoerer_model_bt,"BLModel"=>:spoerer_model_bl,"BLTModel"=>:spoerer_model_blt)
+FFModel_names = String[]
+FFModels = Dict("BFModel"=>:spoerer_model_bf,"BKModel"=>:spoerer_model_bk,"BModel"=>:spoerer_model_b)
+Main = Main
+accuracy = Main.accuracy
+adapt_learnrate = adapt_learnrate
+batch_size = 100
+dataManager = Main.dataManager
+dataset_names = ["MNIST"]
+date_format = dd_mm_yyyy
+debug_str = DEBUG_
+decay_rate = 0.1
+decay_step = 40
+epochs = 35
+image_size = (32, 32)
+init_learning_rate = 0.01
+io = IOStream(<file ../logs/DEBUG_log_BTModel.log>)
+lambda = 0.0005
+load_dataset = load_dataset
+log_save_location = ../logs/
+model_save_location = ../trainedModels/
+momentum = 0.9
+printout_interval = 1
+test_folderpath_debris = ../digitclutter/digitdebris/testset/mat/
+test_folderpath_digits = ../digitclutter/digitclutter/testset/mat/
+time_format = HH:MM:SS
+time_steps = 4
+trainFeedforwardNet = trainFeedforwardNet
+trainReccurentNet = trainReccurentNet
+train_folderpath_debris = ../digitclutter/digitdebris/trainset/mat/
+train_folderpath_digits = ../digitclutter/digitclutter/trainset/mat/
+usegpu = true
+┌ Debug: --------End of VAR DUMP--------
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:250
+[02:16:02] Training BTModel with MNIST
+┌ Debug: loading MNIST dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:99
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 50000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (50000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: loaded 500 batches of size 100 for training
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:128
+┌ Debug: loaded 100 batches of size 100 for validation
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:129
+┌ Debug: loaded 100 batches of size 100 for testing
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:130
+[02:17:02] INIT with Accuracy(test_set): 0.1030 and Loss(test_set): 1.138962
+[02:21:07] Epoch   1: Accuracy: 0.1219, Loss: 0.341228
+[02:25:02] Epoch   2: Accuracy: 0.2732, Loss: 0.333721
+[02:28:53] Epoch   3: Accuracy: 0.3363, Loss: 0.321481
+[02:32:40] Epoch   4: Accuracy: 0.3875, Loss: 0.310033
+[02:36:25] Epoch   5: Accuracy: 0.4181, Loss: 0.299279
+[02:40:23] Epoch   6: Accuracy: 0.4429, Loss: 0.291197
+[02:44:19] Epoch   7: Accuracy: 0.4777, Loss: 0.283934
+[02:48:15] Epoch   8: Accuracy: 0.4866, Loss: 0.277496
+[02:52:05] Epoch   9: Accuracy: 0.5159, Loss: 0.270882
+[02:55:55] Epoch  10: Accuracy: 0.5325, Loss: 0.266071
+[02:59:51] Epoch  11: Accuracy: 0.5622, Loss: 0.261475
+[03:03:49] Epoch  12: Accuracy: 0.5787, Loss: 0.257582
+[03:07:51] Epoch  13: Accuracy: 0.5996, Loss: 0.254074
+[03:11:55] Epoch  14: Accuracy: 0.6159, Loss: 0.250843
+[03:15:53] Epoch  15: Accuracy: 0.6342, Loss: 0.247763
+[03:19:51] Epoch  16: Accuracy: 0.6424, Loss: 0.244938
+[03:23:56] Epoch  17: Accuracy: 0.6505, Loss: 0.242727
+[03:27:52] Epoch  18: Accuracy: 0.6560, Loss: 0.240511
+[03:31:55] Epoch  19: Accuracy: 0.6661, Loss: 0.238289
+[03:35:50] Epoch  20: Accuracy: 0.6693, Loss: 0.236280
+[03:39:55] Epoch  21: Accuracy: 0.6716, Loss: 0.234606
+[03:43:54] Epoch  22: Accuracy: 0.6711, Loss: 0.233102
+[03:47:54] Epoch  23: Accuracy: 0.6777, Loss: 0.231491
+[03:51:58] Epoch  24: Accuracy: 0.6805, Loss: 0.230312
+[03:56:07] Epoch  25: Accuracy: 0.6828, Loss: 0.228848
+[04:00:07] Epoch  26: Accuracy: 0.6850, Loss: 0.227753
+[04:04:18] Epoch  27: Accuracy: 0.6883, Loss: 0.226614
+[04:08:22] Epoch  28: Accuracy: 0.6904, Loss: 0.225588
+[04:12:34] Epoch  29: Accuracy: 0.6945, Loss: 0.224372
+[04:16:42] Epoch  30: Accuracy: 0.6948, Loss: 0.223690
+[04:20:53] Epoch  31: Accuracy: 0.6978, Loss: 0.222811
+[04:25:00] Epoch  32: Accuracy: 0.6984, Loss: 0.222191
+[04:29:05] Epoch  33: Accuracy: 0.6998, Loss: 0.221717
+[04:33:15] Epoch  34: Accuracy: 0.7013, Loss: 0.220847
+[04:37:23] Epoch  35: Accuracy: 0.7036, Loss: 0.220103
+[04:39:41] FINAL with Accuracy(test_set): 0.7209 and Loss(test_set): 0.218208
