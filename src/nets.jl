@@ -212,7 +212,7 @@ for model_name in FFModel_names
 	fp = "$(log_save_location)$(debug_str)log_$(model_name).log"
 	io = open(fp, "a+")
 	global_logger(SimpleLogger(io)) # for debug outputs
-	@printf(Base.stdout, "Logging to File: %s", fp)
+	@printf(Base.stdout, "Logging to File: %s\n", fp)
 	@printf(io, "\n--------[%s %s]--------\n", Dates.format(now(), date_format), Dates.format(now(), time_format))
 	# dump configuration 
 	@debug begin
@@ -244,7 +244,7 @@ for model_name in FBModel_names
 	fp = "$(log_save_location)$(debug_str)log_$(model_name).log"
 	io = open(fp, "a+")
 	global_logger(SimpleLogger(io)) # for debug outputs
-	@printf(Base.stdout, "Logging to File: %s", fp)
+	@printf(Base.stdout, "Logging to File: %s\n", fp)
 	@printf(io, "\n--------[%s %s]--------\n", Dates.format(now(), date_format), Dates.format(now(), time_format))
 	# dump configuration 
 	@debug begin
