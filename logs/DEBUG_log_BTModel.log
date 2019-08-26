@@ -1,0 +1,336 @@
+
+--------[21_08_2019 00:56:32]--------
+Base = Base
+Core = Core
+FBModel_names = ["BTModel"]
+FBModels = Dict("BTModel"=>:spoerer_model_bt,"BLModel"=>:spoerer_model_bl,"BLTModel"=>:spoerer_model_blt)
+FFModel_names = String[]
+FFModels = Dict("BFModel"=>:spoerer_model_bf,"BKModel"=>:spoerer_model_bk,"BModel"=>:spoerer_model_b)
+Main = Main
+accuracy = Main.accuracy
+adapt_learnrate = adapt_learnrate
+batch_size = 100
+dataManager = Main.dataManager
+dataset_names = ["MNIST"]
+date_format = dd_mm_yyyy
+debug_str = DEBUG_
+decay_rate = 0.1
+decay_step = 40
+epochs = 100
+image_size = (32, 32)
+init_learning_rate = 0.03
+io = IOStream(<file ../logs/DEBUG_log_BTModel.log>)
+lambda = 0.0005
+load_dataset = load_dataset
+log_save_location = ../logs/
+model_save_location = ../trainedModels/
+momentum = 0.9
+printout_interval = 1
+test_folderpath_debris = ../digitclutter/digitdebris/testset/mat/
+test_folderpath_digits = ../digitclutter/digitclutter/testset/mat/
+time_format = HH:MM:SS
+time_steps = 4
+trainFeedforwardNet = trainFeedforwardNet
+trainReccurentNet = trainReccurentNet
+train_folderpath_debris = ../digitclutter/digitdebris/trainset/mat/
+train_folderpath_digits = ../digitclutter/digitclutter/trainset/mat/
+usegpu = true
+┌ Debug: --------End of VAR DUMP--------
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:250
+[00:56:33] Training BTModel with MNIST
+┌ Debug: loading MNIST dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:99
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 50000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (50000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: loaded 500 batches of size 100 for training
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:128
+┌ Debug: loaded 100 batches of size 100 for validation
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:129
+┌ Debug: loaded 100 batches of size 100 for testing
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:130
+[00:57:33] INIT with Accuracy(test_set): 0.1090 and Loss(test_set): 0.642827
+[01:01:34] Epoch   1: Accuracy: 0.4044, Loss: 0.305974
+[01:05:13] Epoch   2: Accuracy: 0.5540, Loss: 0.272788
+[01:08:51] Epoch   3: Accuracy: 0.6157, Loss: 0.248855
+[01:12:30] Epoch   4: Accuracy: 0.6696, Loss: 0.231120
+[01:16:08] Epoch   5: Accuracy: 0.7323, Loss: 0.215852
+[01:19:47] Epoch   6: Accuracy: 0.7765, Loss: 0.210066
+[01:23:28] Epoch   7: Accuracy: 0.8137, Loss: 0.197744
+[01:27:08] Epoch   8: Accuracy: 0.8377, Loss: 0.187328
+[01:30:49] Epoch   9: Accuracy: 0.8600, Loss: 0.180724
+[01:34:30] Epoch  10: Accuracy: 0.8728, Loss: 0.174942
+[01:38:11] Epoch  11: Accuracy: 0.8743, Loss: 0.170865
+[01:41:58] Epoch  12: Accuracy: 0.8853, Loss: 0.164304
+[01:45:45] Epoch  13: Accuracy: 0.8867, Loss: 0.164336
+[01:49:34] Epoch  14: Accuracy: 0.8746, Loss: 0.171206
+[01:53:20] Epoch  15: Accuracy: 0.8915, Loss: 0.157350
+[01:57:08] Epoch  16: Accuracy: 0.9014, Loss: 0.155151
+[02:00:55] Epoch  17: Accuracy: 0.9026, Loss: 0.152227
+[02:04:45] Epoch  18: Accuracy: 0.9121, Loss: 0.149549
+[02:08:34] Epoch  19: Accuracy: 0.9136, Loss: 0.146885
+[02:12:25] Epoch  20: Accuracy: 0.9174, Loss: 0.145542
+[02:16:16] Epoch  21: Accuracy: 0.8990, Loss: 0.146049
+[02:20:04] Epoch  22: Accuracy: 0.9164, Loss: 0.142967
+[02:23:58] Epoch  23: Accuracy: 0.9187, Loss: 0.143252
+[02:27:53] Epoch  24: Accuracy: 0.9213, Loss: 0.141820
+[02:31:45] Epoch  25: Accuracy: 0.9193, Loss: 0.141869
+[02:35:35] Epoch  26: Accuracy: 0.9232, Loss: 0.139975
+[02:39:28] Epoch  27: Accuracy: 0.9269, Loss: 0.140415
+[02:43:22] Epoch  28: Accuracy: 0.9280, Loss: 0.138812
+[02:47:17] Epoch  29: Accuracy: 0.9271, Loss: 0.138262
+[02:51:13] Epoch  30: Accuracy: 0.9294, Loss: 0.139389
+[02:55:06] Epoch  31: Accuracy: 0.9314, Loss: 0.137151
+[02:59:04] Epoch  32: Accuracy: 0.9271, Loss: 0.136739
+[03:03:03] Epoch  33: Accuracy: 0.9320, Loss: 0.136344
+[03:06:59] Epoch  34: Accuracy: 0.9329, Loss: 0.135724
+[03:10:55] Epoch  35: Accuracy: 0.9338, Loss: 0.134545
+[03:14:51] Epoch  36: Accuracy: 0.9327, Loss: 0.134757
+[03:19:06] Epoch  37: Accuracy: 0.9340, Loss: 0.134465
+[03:23:28] Epoch  38: Accuracy: 0.9350, Loss: 0.133951
+[03:27:51] Epoch  39: Accuracy: 0.9343, Loss: 0.134106
+[03:32:10] Epoch  40: Accuracy: 0.9364, Loss: 0.133896
+[03:36:45] Epoch  41: Accuracy: 0.9355, Loss: 0.133434
+[03:41:09] Epoch  42: Accuracy: 0.9378, Loss: 0.132953
+[03:45:43] Epoch  43: Accuracy: 0.9365, Loss: 0.132684
+[03:50:11] Epoch  44: Accuracy: 0.9398, Loss: 0.132266
+[03:54:43] Epoch  45: Accuracy: 0.9390, Loss: 0.132338
+[03:59:03] Epoch  46: Accuracy: 0.9372, Loss: 0.132103
+[04:03:44] Epoch  47: Accuracy: 0.9407, Loss: 0.132199
+[04:08:33] Epoch  48: Accuracy: 0.9393, Loss: 0.131715
+[04:13:05] Epoch  49: Accuracy: 0.9404, Loss: 0.132206
+[04:17:36] Epoch  50: Accuracy: 0.9414, Loss: 0.131186
+[04:22:17] Epoch  51: Accuracy: 0.9426, Loss: 0.131097
+[04:26:53] Epoch  52: Accuracy: 0.9416, Loss: 0.131124
+[04:31:25] Epoch  53: Accuracy: 0.9416, Loss: 0.131120
+[04:35:58] Epoch  54: Accuracy: 0.9416, Loss: 0.130890
+[04:40:28] Epoch  55: Accuracy: 0.9422, Loss: 0.130485
+[04:45:02] Epoch  56: Accuracy: 0.9433, Loss: 0.130414
+[04:49:35] Epoch  57: Accuracy: 0.9436, Loss: 0.130313
+[04:54:06] Epoch  58: Accuracy: 0.9431, Loss: 0.130525
+[04:58:42] Epoch  59: Accuracy: 0.9442, Loss: 0.130147
+[05:03:20] Epoch  60: Accuracy: 0.9443, Loss: 0.129816
+[05:07:59] Epoch  61: Accuracy: 0.9446, Loss: 0.129622
+[05:12:36] Epoch  62: Accuracy: 0.9438, Loss: 0.129785
+[05:17:16] Epoch  63: Accuracy: 0.9454, Loss: 0.129845
+[05:22:01] Epoch  64: Accuracy: 0.9454, Loss: 0.129418
+[05:26:45] Epoch  65: Accuracy: 0.9451, Loss: 0.129312
+[05:31:32] Epoch  66: Accuracy: 0.9441, Loss: 0.129651
+[05:36:08] Epoch  67: Accuracy: 0.9460, Loss: 0.129332
+[05:40:53] Epoch  68: Accuracy: 0.9467, Loss: 0.129220
+[05:45:38] Epoch  69: Accuracy: 0.9456, Loss: 0.129251
+[05:50:24] Epoch  70: Accuracy: 0.9463, Loss: 0.129024
+[05:55:09] Epoch  71: Accuracy: 0.9461, Loss: 0.128949
+[05:59:51] Epoch  72: Accuracy: 0.9466, Loss: 0.128986
+[06:04:35] Epoch  73: Accuracy: 0.9468, Loss: 0.128840
+[06:09:21] Epoch  74: Accuracy: 0.9470, Loss: 0.128794
+[06:14:11] Epoch  75: Accuracy: 0.9468, Loss: 0.128728
+[06:18:57] Epoch  76: Accuracy: 0.9469, Loss: 0.128698
+[06:23:42] Epoch  77: Accuracy: 0.9469, Loss: 0.128624
+[06:28:26] Epoch  78: Accuracy: 0.9470, Loss: 0.128544
+[06:33:12] Epoch  79: Accuracy: 0.9472, Loss: 0.128537
+[06:37:56] Epoch  80: Accuracy: 0.9475, Loss: 0.128518
+[06:42:40] Epoch  81: Accuracy: 0.9476, Loss: 0.128359
+[06:47:18] Epoch  82: Accuracy: 0.9474, Loss: 0.128408
+[06:52:08] Epoch  83: Accuracy: 0.9474, Loss: 0.128342
+[06:56:50] Epoch  84: Accuracy: 0.9478, Loss: 0.128314
+[07:01:34] Epoch  85: Accuracy: 0.9481, Loss: 0.128260
+[07:06:18] Epoch  86: Accuracy: 0.9480, Loss: 0.128255
+[07:11:05] Epoch  87: Accuracy: 0.9479, Loss: 0.128263
+[07:15:50] Epoch  88: Accuracy: 0.9482, Loss: 0.128223
+[07:20:21] Epoch  89: Accuracy: 0.9482, Loss: 0.128178
+[07:24:56] Epoch  90: Accuracy: 0.9485, Loss: 0.128157
+[07:29:28] Epoch  91: Accuracy: 0.9485, Loss: 0.128135
+[07:34:06] Epoch  92: Accuracy: 0.9484, Loss: 0.128113
+[07:38:41] Epoch  93: Accuracy: 0.9482, Loss: 0.128104
+[07:45:58] Epoch  94: Accuracy: 0.9480, Loss: 0.128120
+[07:54:22] Epoch  95: Accuracy: 0.9483, Loss: 0.128085
+[08:02:51] Epoch  96: Accuracy: 0.9487, Loss: 0.128071
+[08:11:23] Epoch  97: Accuracy: 0.9487, Loss: 0.128085
+[08:20:00] Epoch  98: Accuracy: 0.9488, Loss: 0.128084
+[08:28:33] Epoch  99: Accuracy: 0.9488, Loss: 0.128075
+[08:37:09] Epoch 100: Accuracy: 0.9488, Loss: 0.128054
+[08:41:11] FINAL with Accuracy(test_set): 0.9425 and Loss(test_set): 0.126180
+
+--------[22_08_2019 14:18:25]--------
+Base = Base
+Core = Core
+FBModel_names = ["BTModel"]
+FBModels = Dict("BTModel"=>:spoerer_model_bt,"BLModel"=>:spoerer_model_bl,"BLTModel"=>:spoerer_model_blt)
+FFModel_names = String[]
+FFModels = Dict("BFModel"=>:spoerer_model_bf,"BKModel"=>:spoerer_model_bk,"BModel"=>:spoerer_model_b)
+Main = Main
+accuracy = Main.accuracy
+adapt_learnrate = adapt_learnrate
+batch_size = 100
+dataManager = Main.dataManager
+dataset_names = ["MNIST"]
+date_format = dd_mm_yyyy
+debug_str = DEBUG_
+decay_rate = 0.1
+decay_step = 40
+epochs = 100
+image_size = (32, 32)
+init_learning_rate = 0.01
+io = IOStream(<file ../logs/DEBUG_log_BTModel.log>)
+lambda = 0.0005
+load_dataset = load_dataset
+log_save_location = ../logs/
+model_save_location = ../trainedModels/
+momentum = 0.9
+printout_interval = 1
+test_folderpath_debris = ../digitclutter/digitdebris/testset/mat/
+test_folderpath_digits = ../digitclutter/digitclutter/testset/mat/
+time_format = HH:MM:SS
+time_steps = 4
+trainFeedforwardNet = trainFeedforwardNet
+trainReccurentNet = trainReccurentNet
+train_folderpath_debris = ../digitclutter/digitdebris/trainset/mat/
+train_folderpath_digits = ../digitclutter/digitclutter/trainset/mat/
+usegpu = true
+┌ Debug: --------End of VAR DUMP--------
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:250
+[14:18:26] Training BTModel with MNIST
+┌ Debug: loading MNIST dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:99
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 50000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (50000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: loaded 500 batches of size 100 for training
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:128
+┌ Debug: loaded 100 batches of size 100 for validation
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:129
+┌ Debug: loaded 100 batches of size 100 for testing
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:130
+[14:19:26] INIT with Accuracy(test_set): 0.0962 and Loss(test_set): 0.721116
+[14:23:27] Epoch   1: Accuracy: 0.1136, Loss: 0.340966
+[14:27:07] Epoch   2: Accuracy: 0.2733, Loss: 0.334052
+[14:30:44] Epoch   3: Accuracy: 0.3611, Loss: 0.322562
+[14:34:22] Epoch   4: Accuracy: 0.3997, Loss: 0.311582
+[14:38:02] Epoch   5: Accuracy: 0.4340, Loss: 0.301206
+[14:41:43] Epoch   6: Accuracy: 0.4545, Loss: 0.291803
+[14:45:24] Epoch   7: Accuracy: 0.4832, Loss: 0.283651
+[14:49:05] Epoch   8: Accuracy: 0.5109, Loss: 0.276814
+[14:52:43] Epoch   9: Accuracy: 0.5278, Loss: 0.271028
+[14:56:26] Epoch  10: Accuracy: 0.5425, Loss: 0.265794
+[15:00:10] Epoch  11: Accuracy: 0.5525, Loss: 0.261291
+[15:03:55] Epoch  12: Accuracy: 0.5635, Loss: 0.257000
+[15:07:41] Epoch  13: Accuracy: 0.5833, Loss: 0.252968
+[15:11:29] Epoch  14: Accuracy: 0.6011, Loss: 0.249045
+[15:15:16] Epoch  15: Accuracy: 0.6261, Loss: 0.244994
+[15:19:03] Epoch  16: Accuracy: 0.6406, Loss: 0.241516
+[15:22:51] Epoch  17: Accuracy: 0.6520, Loss: 0.238224
+[15:26:40] Epoch  18: Accuracy: 0.6598, Loss: 0.235335
+[15:30:28] Epoch  19: Accuracy: 0.6654, Loss: 0.232683
+[15:34:17] Epoch  20: Accuracy: 0.6699, Loss: 0.229958
+[15:38:06] Epoch  21: Accuracy: 0.6773, Loss: 0.227188
+[15:41:56] Epoch  22: Accuracy: 0.6856, Loss: 0.225066
+[15:45:47] Epoch  23: Accuracy: 0.6920, Loss: 0.222737
+[15:49:39] Epoch  24: Accuracy: 0.6935, Loss: 0.221257
+[15:53:34] Epoch  25: Accuracy: 0.6991, Loss: 0.219359
+[15:57:28] Epoch  26: Accuracy: 0.7055, Loss: 0.217543
+[16:01:22] Epoch  27: Accuracy: 0.7080, Loss: 0.216073
+[16:05:17] Epoch  28: Accuracy: 0.7097, Loss: 0.214796
+[16:09:10] Epoch  29: Accuracy: 0.7174, Loss: 0.213044
+[16:13:03] Epoch  30: Accuracy: 0.7204, Loss: 0.211761
+[16:16:59] Epoch  31: Accuracy: 0.7253, Loss: 0.210094
+[16:20:54] Epoch  32: Accuracy: 0.7279, Loss: 0.208848
+[16:24:51] Epoch  33: Accuracy: 0.7318, Loss: 0.207707
+[16:28:46] Epoch  34: Accuracy: 0.7341, Loss: 0.206519
+[16:33:17] Epoch  35: Accuracy: 0.7411, Loss: 0.205267
+[16:37:56] Epoch  36: Accuracy: 0.7439, Loss: 0.204222
+[16:42:32] Epoch  37: Accuracy: 0.7468, Loss: 0.203043
+[16:47:08] Epoch  38: Accuracy: 0.7509, Loss: 0.201982
+[16:51:44] Epoch  39: Accuracy: 0.7550, Loss: 0.200973
+[16:56:12] Epoch  40: Accuracy: 0.7594, Loss: 0.200142
+[17:00:53] Epoch  41: Accuracy: 0.7615, Loss: 0.199293
+[17:05:34] Epoch  42: Accuracy: 0.7652, Loss: 0.198564
+[17:10:15] Epoch  43: Accuracy: 0.7670, Loss: 0.198058
+[17:14:57] Epoch  44: Accuracy: 0.7696, Loss: 0.197489
+[17:19:37] Epoch  45: Accuracy: 0.7719, Loss: 0.196933
+[17:24:25] Epoch  46: Accuracy: 0.7732, Loss: 0.196507
+[17:29:10] Epoch  47: Accuracy: 0.7749, Loss: 0.196104
+[17:34:02] Epoch  48: Accuracy: 0.7767, Loss: 0.195642
+[17:38:44] Epoch  49: Accuracy: 0.7784, Loss: 0.195271
+[17:43:39] Epoch  50: Accuracy: 0.7809, Loss: 0.194925
+[17:48:29] Epoch  51: Accuracy: 0.7814, Loss: 0.194545
+[17:53:20] Epoch  52: Accuracy: 0.7821, Loss: 0.194257
+[17:58:13] Epoch  53: Accuracy: 0.7837, Loss: 0.193931
+[18:03:03] Epoch  54: Accuracy: 0.7849, Loss: 0.193686
+[18:07:57] Epoch  55: Accuracy: 0.7860, Loss: 0.193420
+[18:12:57] Epoch  56: Accuracy: 0.7865, Loss: 0.193173
+[18:17:50] Epoch  57: Accuracy: 0.7883, Loss: 0.192968
+[18:22:46] Epoch  58: Accuracy: 0.7891, Loss: 0.192753
+[18:27:35] Epoch  59: Accuracy: 0.7898, Loss: 0.192567
+[18:32:23] Epoch  60: Accuracy: 0.7903, Loss: 0.192392
+[18:37:18] Epoch  61: Accuracy: 0.7904, Loss: 0.192243
+[18:42:15] Epoch  62: Accuracy: 0.7910, Loss: 0.192007
+[18:47:10] Epoch  63: Accuracy: 0.7914, Loss: 0.191837
+[18:52:07] Epoch  64: Accuracy: 0.7923, Loss: 0.191694
+[18:57:03] Epoch  65: Accuracy: 0.7925, Loss: 0.191549
+[19:02:02] Epoch  66: Accuracy: 0.7931, Loss: 0.191402
+[19:07:02] Epoch  67: Accuracy: 0.7934, Loss: 0.191324
+[19:11:53] Epoch  68: Accuracy: 0.7938, Loss: 0.191201
+[19:16:50] Epoch  69: Accuracy: 0.7941, Loss: 0.191084
+[19:21:51] Epoch  70: Accuracy: 0.7940, Loss: 0.190958
+[19:26:53] Epoch  71: Accuracy: 0.7946, Loss: 0.190840
+[19:31:59] Epoch  72: Accuracy: 0.7949, Loss: 0.190739
+[19:37:01] Epoch  73: Accuracy: 0.7951, Loss: 0.190649
+[19:42:06] Epoch  74: Accuracy: 0.7951, Loss: 0.190546
+[19:47:10] Epoch  75: Accuracy: 0.7952, Loss: 0.190456
+[19:52:15] Epoch  76: Accuracy: 0.7959, Loss: 0.190364
+[19:57:08] Epoch  77: Accuracy: 0.7960, Loss: 0.190294
+[20:02:12] Epoch  78: Accuracy: 0.7964, Loss: 0.190229
+[20:07:18] Epoch  79: Accuracy: 0.7965, Loss: 0.190153
+[20:12:14] Epoch  80: Accuracy: 0.7966, Loss: 0.190098
+[20:16:45] Epoch  81: Accuracy: 0.7968, Loss: 0.190045
+[20:21:14] Epoch  82: Accuracy: 0.7969, Loss: 0.189995
+[20:25:48] Epoch  83: Accuracy: 0.7973, Loss: 0.189939
+[20:30:17] Epoch  84: Accuracy: 0.7974, Loss: 0.189887
+[20:34:45] Epoch  85: Accuracy: 0.7972, Loss: 0.189842
+[20:39:14] Epoch  86: Accuracy: 0.7976, Loss: 0.189808
+[20:43:43] Epoch  87: Accuracy: 0.7975, Loss: 0.189767
+[20:48:15] Epoch  88: Accuracy: 0.7974, Loss: 0.189729
+[20:52:47] Epoch  89: Accuracy: 0.7974, Loss: 0.189701
+[20:57:19] Epoch  90: Accuracy: 0.7977, Loss: 0.189668
+[21:01:52] Epoch  91: Accuracy: 0.7977, Loss: 0.189637
+[21:06:26] Epoch  92: Accuracy: 0.7978, Loss: 0.189600
+[21:11:01] Epoch  93: Accuracy: 0.7980, Loss: 0.189568
+[21:18:20] Epoch  94: Accuracy: 0.7981, Loss: 0.189541
+[21:26:43] Epoch  95: Accuracy: 0.7981, Loss: 0.189511
+[21:35:07] Epoch  96: Accuracy: 0.7979, Loss: 0.189485
+[21:43:34] Epoch  97: Accuracy: 0.7979, Loss: 0.189458
+[21:52:01] Epoch  98: Accuracy: 0.7979, Loss: 0.189432
+[22:00:33] Epoch  99: Accuracy: 0.7979, Loss: 0.189411
+[22:09:07] Epoch 100: Accuracy: 0.7980, Loss: 0.189389
+[22:13:10] FINAL with Accuracy(test_set): 0.8106 and Loss(test_set): 0.187170
