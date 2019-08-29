@@ -11,19 +11,19 @@ BTNet: the BNet including top down connections from the second hidden layer to t
 BLTNet:the BNet including top down and lateral connections 
 
 """
+
 using ArgParse
 s = ArgParseSettings()
 @add_arg_table s begin
     "--gpu"
-        help = "set if you want to use the GPU for training"
+        help = "set, if you want to train on the GPU"
 		action = :store_true
-		default = true
     "--ffmodels"
-        help = "Names of the feedforward models which will be trained. As one string with space as separator!"
+        help = "Names of the feedforward models which will be trained. As one string with space as separator! Possible Nets are: BModel, BKModel and BFModel"
         arg_type = String
         default = "BModel BKModel BFModel"
     "--fbmodels"
-        help = "Names of the feedback models which will be trained. As one string with space as separator!"
+        help = "Names of the feedback models which will be trained. As one string with space as separator! Possible Nets are: BTModel, BLModel and BLTModel"
 		arg_type = String
         default = "BTModel BLModel BLTModel"
     "--learn"
@@ -32,10 +32,10 @@ s = ArgParseSettings()
 		default = 0.1f0
     "--epochs" 
 		help = "Number of epochs"
-		arg_type = Float32
+		arg_type = Int64
 		default = 100
 	"--data"
-		help = "Names of the datasets the defined models will be trained on. As one string with space as separator!"
+		help = "Names of the datasets the defined models will be trained on. As one string with space as separator! Possible datasets are: 10debris, 30debris, 50debris, 3digits, 4digits, 5digits and MNIST"
 		arg_type = String
 		default = "10debris 30debris 50debris 3digits 4digits 5digits MNIST"
 end
@@ -66,7 +66,7 @@ norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T))
 const batch_size = 100
 const momentum = 0.9f0
 const lambda = 0.0005f0
-init_learning_rate = parse(Float32, ARGS[1]) 
+init_learning_rate = parsed_args["learn"] 
 epochs = parsed_args["epochs"]
 const decay_rate = 0.1f0
 const decay_step = 40
@@ -148,7 +148,7 @@ function load_dataset(dataset_name)
 	end
 
 	@debug("loaded $(length(train_set)) batches of size $(size(train_set[1][1], 4)) for training")
-	@debug("loaded $(length(validation_set)) batches of size $(size(validation_set[1][1], 4)) for validation")
+	if (length(validation_set) > 0) @debug("loaded $(length(validation_set)) batches of size $(size(validation_set[1][1], 4)) for validation") end
 	@debug("loaded $(length(test_set)) batches of size $(size(test_set[1][1], 4)) for testing")
 	
 	return (train_set, validation_set, test_set)
