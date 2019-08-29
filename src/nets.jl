@@ -154,7 +154,7 @@ function load_dataset(dataset_name)
 	return (train_set, validation_set, test_set)
 end
 
-function trainReccurentNet(model, train_set, test_set, model_name::String, dataset_name::String)
+function trainReccurentNet(model, train_set, validation_set, test_set, model_name::String, dataset_name::String)
 	function loss(x, y)
         loss_val = 0.0f0
         for i in 1:time_steps
@@ -175,6 +175,7 @@ function trainReccurentNet(model, train_set, test_set, model_name::String, datas
 	end
     
     opt = Momentum(init_learning_rate, momentum)
+	@printf(io, "[%s] INIT with Accuracy(val_set): %.4f and Loss(val_set): %f\n", Dates.format(now(), time_format), recur_accuracy(model, validation_set, time_steps, dataset_name), loss(validation_set))
 	@printf(io, "[%s] INIT with Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set)) 
     for i in 1:epochs
         flush(io)
@@ -184,11 +185,12 @@ function trainReccurentNet(model, train_set, test_set, model_name::String, datas
 			@printf(io, "[%s] Epoch %3d: Accuracy: %.4f, Loss: %f\n", Dates.format(now(), time_format), i, recur_accuracy(model, train_set, time_steps, dataset_name), loss(train_set))
 		end
     end
-	@printf(io, "[%s] FINAL with Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set)) 
+	@printf(io, "[%s] FINAL Accuracy(val_set): %.4f and Loss(val_set): %f\n", Dates.format(now(), time_format), recur_accuracy(model, validation_set, time_steps, dataset_name), loss(validation_set)) 
+	@printf(io, "[%s] FINAL Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), recur_accuracy(model, test_set, time_steps, dataset_name), loss(test_set)) 
     return recur_accuracy(model, test_set, time_steps, dataset_name)
 end
 
-function trainFeedforwardNet(model, train_set, test_set, model_name::String, dataset_name::String)
+function trainFeedforwardNet(model, train_set, validation_set, test_set, model_name::String, dataset_name::String)
 	function loss(x, y)
 		y_hat = model(x)
 		return binarycrossentropy(y_hat, y) + lambda * sum(norm, params(model))
@@ -203,6 +205,7 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
 	end
     
     opt = Momentum(init_learning_rate, momentum)
+	@printf(io, "[%s] INIT with Accuracy(val_set): %.4f and Loss(val_set): %f\n", Dates.format(now(), time_format), ff_accuracy(model, validation_set, dataset_name), loss(validation_set)) 
 	@printf(io, "[%s] INIT with Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), ff_accuracy(model, test_set, dataset_name), loss(test_set)) 
     for i in 1:epochs
 		flush(io)
@@ -213,7 +216,8 @@ function trainFeedforwardNet(model, train_set, test_set, model_name::String, dat
 		end
 		# TODO store intermediate model or load if it already exists, one needs to find a good solution not to move the model on the cpu store it and then move it back to the gpu 
     end
-	@printf(io, "[%s] FINAL with Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), ff_accuracy(model, test_set, dataset_name), loss(test_set)) 
+	@printf(io, "[%s] FINAL Accuracy(val_set): %.4f and Loss(val_set): %f\n", Dates.format(now(), time_format), ff_accuracy(model, validation_set, dataset_name), loss(validation_set)) 
+	@printf(io, "[%s] FINAL Accuracy(test_set): %.4f and Loss(test_set): %f\n", Dates.format(now(), time_format), ff_accuracy(model, test_set, dataset_name), loss(test_set)) 
 	# return the accuracy across the test set
     return ff_accuracy(model, test_set, dataset_name)
 end
@@ -256,7 +260,8 @@ for model_name in FFModel_names
 		
 		best_acc = trainFeedforwardNet(model, train_set, validation_set, model_name, dataset_name)
 		model = cpu(model)
-		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" model best_acc
+		weights = Tracker.data.(params(model))
+		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" weights best_acc
 	end
 	close(io)
 end
@@ -297,7 +302,8 @@ for model_name in FBModel_names
 		
 		best_acc = trainReccurentNet(model, train_set, validation_set, model_name, dataset_name)
 		model = cpu(model)
-		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" model best_acc
+		weights = Tracker.data.(params(model.cell))
+		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" weights best_acc
 	end
 	close(io)
 end
