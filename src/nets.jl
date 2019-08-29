@@ -11,67 +11,7 @@ BTNet: the BNet including top down connections from the second hidden layer to t
 BLTNet:the BNet including top down and lateral connections 
 
 """
-
-using Flux, Statistics
-using Flux: onecold
-using BSON
-using Dates
-using Printf
-using NNlib
-using FeedbackNets
-include("./dataManager.jl")
-include("./accuracy.jl")
-using .dataManager: make_batch, make_minibatch, make_MNIST_batch
-using .accuracy: binarycrossentropy, recur_accuracy, ff_accuracy
-using Logging
 using ArgParse
-import LinearAlgebra: norm
-norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
-
-
-######################
-# PARAMETERS
-######################
-const batch_size = 100
-const momentum = 0.9f0
-const lambda = 0.0005f0
-init_learning_rate = 0.1f0 
-epochs = 100
-const decay_rate = 0.1f0
-const decay_step = 40
-# number of timesteps the network is unrolled
-const time_steps = 4
-const usegpu = true
-const printout_interval = 1
-const time_format = "HH:MM:SS"
-const date_format = "dd_mm_yyyy"
-image_size = (32, 32) # MNIST is using 28, 28
-# enter the datasets and models you want to train
-dataset_names = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits", "MNIST"]
-FFModel_names = ["BModel", "BKModel", "BFModel"]
-FBModel_names = ["BTModel", "BLModel", "BLTModel"]
-
-train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
-train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
-test_folderpath_debris = "../digitclutter/digitdebris/testset/mat/"
-test_folderpath_digits = "../digitclutter/digitclutter/testset/mat/"
-
-const model_save_location = "../trainedModels/"
-const log_save_location = "../logs/"
-# end of parameters
-
-# DEBUGGING
-# activate debugging with JULIA_DEBUG=modulename, with keyword all for all files or Main for this script only
-# add DEBUG_ to log file name when debugging is active 
-debug_str = ""
-@debug begin
-	global debug_str
-	debug_str = "DEBUG_"
-	"------DEBUGGING ACTIVATED------"
-end
-
-io = nothing
-
 s = ArgParseSettings()
 @add_arg_table s begin
     "--gpu"
@@ -99,15 +39,73 @@ s = ArgParseSettings()
 		arg_type = String
 		default = "10debris 30debris 50debris 3digits 4digits 5digits MNIST"
 end
+parsed_args = parse_args(ARGS, s)
 
-parsed_args = parse_commandline()
 
 
-init_learning_rate = parse(Float32, ARGS[1])
+using Flux, Statistics
+using Flux: onecold
+using BSON
+using Dates
+using Printf
+using NNlib
+using FeedbackNets
+include("./dataManager.jl")
+include("./accuracy.jl")
+using .dataManager: make_batch, make_minibatch, make_MNIST_batch
+using .accuracy: binarycrossentropy, recur_accuracy, ff_accuracy
+using Logging
+
+import LinearAlgebra: norm
+norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
+
+
+######################
+# PARAMETERS
+######################
+const batch_size = 100
+const momentum = 0.9f0
+const lambda = 0.0005f0
+init_learning_rate = parse(Float32, ARGS[1]) 
 epochs = parsed_args["epochs"]
+const decay_rate = 0.1f0
+const decay_step = 40
+# number of timesteps the network is unrolled
+const time_steps = 4
+const usegpu = true
+const printout_interval = 1
+const time_format = "HH:MM:SS"
+const date_format = "dd_mm_yyyy"
+image_size = (32, 32) # MNIST is using 28, 28
+# enter the datasets and models you want to train
 dataset_names = convert.(String, split(parsed_args["data"]))
 FFModel_names = convert.(String, split(parsed_args["ffmodels"]))
 FBModel_names = convert.(String, split(parsed_args["fbmodels"]))
+# dataset_names = ["10debris", "30debris", "50debris", "3digits", "4digits", "5digits", "MNIST"]
+# FFModel_names = ["BModel", "BKModel", "BFModel"]
+# FBModel_names = ["BTModel", "BLModel", "BLTModel"]
+
+train_folderpath_debris = "../digitclutter/digitdebris/trainset/mat/"
+train_folderpath_digits = "../digitclutter/digitclutter/trainset/mat/"
+test_folderpath_debris = "../digitclutter/digitdebris/testset/mat/"
+test_folderpath_digits = "../digitclutter/digitclutter/testset/mat/"
+
+const model_save_location = "../trainedModels/"
+const log_save_location = "../logs/"
+# end of parameters
+
+# DEBUGGING
+# activate debugging with JULIA_DEBUG=modulename, with keyword all for all files or Main for this script only
+# add DEBUG_ to log file name when debugging is active 
+debug_str = ""
+@debug begin
+	global debug_str
+	debug_str = "DEBUG_"
+	"------DEBUGGING ACTIVATED------"
+end
+
+io = nothing
+
 usegpu = parsed_args["gpu"]
 
 if usegpu
