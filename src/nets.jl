@@ -24,6 +24,7 @@ include("./accuracy.jl")
 using .dataManager: make_batch, make_minibatch, make_MNIST_batch
 using .accuracy: binarycrossentropy, recur_accuracy, ff_accuracy
 using Logging
+using ArgParse
 import LinearAlgebra: norm
 norm(x::TrackedArray{T}) where T = sqrt(sum(abs2.(x)) + eps(T)) 
 
@@ -71,23 +72,46 @@ end
 
 io = nothing
 
-if usegpu
-    using CuArrays
+s = ArgParseSettings()
+@add_arg_table s begin
+    "--gpu"
+        help = "set if you want to use the GPU for training"
+		action = :store_true
+		default = true
+    "--ffmodels"
+        help = "Names of the feedforward models which will be trained. As one string with space as separator!"
+        arg_type = String
+        default = "BModel BKModel BFModel"
+    "--fbmodels"
+        help = "Names of the feedback models which will be trained. As one string with space as separator!"
+		arg_type = String
+        default = "BTModel BLModel BLTModel"
+    "--learn"
+        help = "learning rate"
+		arg_type = Float32
+		default = 0.1f0
+    "--epochs" 
+		help = "Number of epochs"
+		arg_type = Float32
+		default = 100
+	"--data"
+		help = "Names of the datasets the defined models will be trained on. As one string with space as separator!"
+		arg_type = String
+		default = "10debris 30debris 50debris 3digits 4digits 5digits MNIST"
 end
 
-# Usage:
-# ARG1 learning rate
-# ARG2 epochs
-# ARG3 dataset names
-# ARG4 ff model names
-# ARG5 fb model names
- 
-if (length(ARGS) > 0)
-	init_learning_rate = parse(Float32, ARGS[1])
-	epochs = parse(Int32, ARGS[2])
-	dataset_names = convert.(String, split(ARGS[3]))
-	FFModel_names = convert.(String, split(ARGS[4]))
-	FBModel_names = convert.(String, split(ARGS[5]))
+parsed_args = parse_commandline()
+
+
+init_learning_rate = parse(Float32, ARGS[1])
+epochs = parsed_args["epochs"]
+dataset_names = convert.(String, split(parsed_args["data"]))
+FFModel_names = convert.(String, split(parsed_args["ffmodels"]))
+FBModel_names = convert.(String, split(parsed_args["fbmodels"]))
+usegpu = parsed_args["gpu"]
+
+if usegpu
+    using CuArrays
 end
 
 function adapt_learnrate(epoch_idx)
