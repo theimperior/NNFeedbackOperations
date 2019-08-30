@@ -5,6 +5,9 @@ using Base.Iterators: repeated, partition
 using Statistics
 using Flux.Data.MNIST
 using Flux:onehotbatch
+
+export make_batch, make_MNIST_batch, normalizePixelwise!
+
 """
 	make_minibatch(X, Y, idxset)
 	
@@ -28,10 +31,11 @@ function make_minibatch(X, Y, idxset)
 end
 
 """
-    make_batch(filepath, batch_size=128, normalize=true)
+    make_batch(filepath, filenames...; batch_size=100, normalize_imgs=true, truncate_imgs=true)
     
-Creates batches with size batch_size(default 100) from filenames at given filepath. Images will be normalized if normalize is set (default true). 
-If batch_size equals -1 the batch size will be the size of the dataset
+Creates batches with size batch_size(default 100) from filenames at given filepath. Images will be normalized if normalize_imgs is set (default true). 
+Images will be truncated to -sigma to sigma, if truncate_imgs is set (default true).
+If batch_size equals -1 the batch size will be the size of the dataset.
 Structure of the .mat file: 
 
     fieldname | size
@@ -94,7 +98,15 @@ function make_batch(filepath, filenames...; batch_size=100, normalize_imgs=true,
     return train_set, mean_img, std_img
 end # function make_batch
 
-
+"""
+	make_MNIST_batch(;batch_size=100, normalize_imgs=true, truncate_imgs=true, create_validation_set=false)
+	
+Loads the MNIST dataset. For the parameters batch_size, normalize_imgs and truncate_imgs please see the documentation of make_batch. 
+create_validation_set can be set, if a validation set is required. In this case the dataset is split in the following manner: 
+	50.000 samples for training
+	10.000 samples for validation
+	10.000 samples for testing
+"""
 function make_MNIST_batch(;batch_size=100, normalize_imgs=true, truncate_imgs=true, create_validation_set=false)
 	@debug("loading MNIST dataset")
 	# process __train__ images
@@ -154,9 +166,11 @@ function make_MNIST_minibatch(batch_size, mnist_imgs, mnist_labels, normalize_im
 end # function make_MNIST_minibatch
 
 """
-normalize input images along the batch dimension
-input should have standart flux order: Widht x height x channels x batchsize
-if truncate is set to true the last 1% beyond 2.576 sigma will be clipped to 2.576 sigma
+	normalizePixelwise!(images, truncate)
+	
+Normalizes the input images along the batch dimension.
+The input should have standard flux order: Widht x height x channels x batchsize
+If truncate is set to true the last 1% beyond 2.576 sigma will be clipped to 2.576 sigma
 """
 function normalizePixelwise!(images, truncate)
 	mean_img = mean(images, dims=4)
