@@ -165,7 +165,8 @@ function trainReccurentNet(model, train_set, validation_set, test_set, model_nam
 		loss_val += lambda * sum(norm, params(model))
         return loss_val
     end
-	
+    
+	# this loss function should only be used for evaluation purpose since gradients cannot be calculated 
 	function loss(dataset)
 		loss_val = 0.0f0
 		for (data, labels) in dataset
@@ -196,10 +197,11 @@ function trainFeedforwardNet(model, train_set, validation_set, test_set, model_n
 		return binarycrossentropy(y_hat, y) + lambda * sum(norm, params(model))
 	end
 	
+	# this loss function should only be used for evaluation purpose since gradients cannot be calculated 
 	function loss(dataset)
 		loss_val = 0.0f0
 		for (data, labels) in dataset
-			loss_val += loss(data, labels)
+			loss_val += Tracker.data(loss(data, labels))
 		end
 		return loss_val / length(dataset)
 	end
@@ -258,7 +260,7 @@ for model_name in FFModel_names
 		model = eval(get(FFModels, model_name, nothing))(Float32, inputsize=image_size)
 		if (usegpu) model = gpu(model) end
 		
-		best_acc = trainFeedforwardNet(model, train_set, validation_set, model_name, dataset_name)
+		best_acc = trainFeedforwardNet(model, train_set, validation_set, test_set, model_name, dataset_name)
 		model = cpu(model)
 		weights = Tracker.data.(params(model))
 		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" weights best_acc
@@ -300,7 +302,7 @@ for model_name in FBModel_names
 		model = Flux.Recur(chain, hidden)
 		if (usegpu) model = gpu(model) end
 		
-		best_acc = trainReccurentNet(model, train_set, validation_set, model_name, dataset_name)
+		best_acc = trainReccurentNet(model, train_set, validation_set, test_set, model_name, dataset_name)
 		model = cpu(model)
 		weights = Tracker.data.(params(model.cell))
 		BSON.@save "$(model_save_location)$(model_name)_$(dataset_name).bson" weights best_acc

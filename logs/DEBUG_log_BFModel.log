@@ -1,0 +1,312 @@
+
+--------[30_08_2019 12:47:04]--------
+Base = Base
+Core = Core
+FBModel_names = String[]
+FBModels = Dict("BTModel"=>:spoerer_model_bt,"BLModel"=>:spoerer_model_bl,"BLTModel"=>:spoerer_model_blt)
+FFModel_names = ["BFModel"]
+FFModels = Dict("BFModel"=>:spoerer_model_bf,"BKModel"=>:spoerer_model_bk,"BModel"=>:spoerer_model_b)
+Main = Main
+accuracy = Main.accuracy
+adapt_learnrate = adapt_learnrate
+batch_size = 100
+dataManager = Main.dataManager
+dataset_names = ["MNIST"]
+date_format = dd_mm_yyyy
+debug_str = DEBUG_
+decay_rate = 0.1
+decay_step = 40
+epochs = 12
+image_size = (32, 32)
+init_learning_rate = 0.001
+io = IOStream(<file ../logs/DEBUG_log_BFModel.log>)
+lambda = 0.0005
+load_dataset = load_dataset
+log_save_location = ../logs/
+model_save_location = ../trainedModels/
+momentum = 0.9
+parsed_args = Dict{String,Any}("epochs"=>12,"fbmodels"=>"","learn"=>0.001,"gpu"=>true,"ffmodels"=>"BFModel","data"=>"MNIST")
+printout_interval = 1
+s = ArgParseSettings(
+  prog=nets.jl
+  description=
+  epilog=
+  usage=
+  version=Unspecified version
+  add_help=true
+  add_version=false
+  fromfile_prefix_chars=Set(Char[])
+  autofix_names=false
+  error_on_conflict=true
+  suppress_warnings=false
+  allow_ambiguous_opts=false
+  commands_are_required=true
+  default_group=
+  exc_handler=ArgParse.default_handler
+  preformatted_description=false
+  preformatted_epilog=false
+  exit_after_help=true
+  >> usage: nets.jl [--gpu] [--ffmodels FFMODELS] [--fbmodels FBMODELS]
+               [--learn LEARN] [--epochs EPOCHS] [--data DATA]
+  )
+test_folderpath_debris = ../digitclutter/digitdebris/testset/mat/
+test_folderpath_digits = ../digitclutter/digitclutter/testset/mat/
+time_format = HH:MM:SS
+time_steps = 4
+trainFeedforwardNet = trainFeedforwardNet
+trainReccurentNet = trainReccurentNet
+train_folderpath_debris = ../digitclutter/digitdebris/trainset/mat/
+train_folderpath_digits = ../digitclutter/digitclutter/trainset/mat/
+usegpu = true
+┌ Debug: --------End of VAR DUMP--------
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:244
+[12:47:13] Training BFModel with MNIST
+┌ Debug: loading MNIST dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:99
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 50000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (50000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: loaded 500 batches of size 100 for training
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:150
+┌ Debug: loaded 100 batches of size 100 for validation
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:151
+┌ Debug: loaded 100 batches of size 100 for testing
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:152
+
+--------[30_08_2019 13:15:36]--------
+Base = Base
+Core = Core
+FBModel_names = String[]
+FBModels = Dict("BTModel"=>:spoerer_model_bt,"BLModel"=>:spoerer_model_bl,"BLTModel"=>:spoerer_model_blt)
+FFModel_names = ["BFModel"]
+FFModels = Dict("BFModel"=>:spoerer_model_bf,"BKModel"=>:spoerer_model_bk,"BModel"=>:spoerer_model_b)
+Main = Main
+accuracy = Main.accuracy
+adapt_learnrate = adapt_learnrate
+batch_size = 100
+dataManager = Main.dataManager
+dataset_names = ["MNIST"]
+date_format = dd_mm_yyyy
+debug_str = DEBUG_
+decay_rate = 0.1
+decay_step = 40
+epochs = 12
+image_size = (32, 32)
+init_learning_rate = 0.001
+io = IOStream(<file ../logs/DEBUG_log_BFModel.log>)
+lambda = 0.0005
+load_dataset = load_dataset
+log_save_location = ../logs/
+model_save_location = ../trainedModels/
+momentum = 0.9
+parsed_args = Dict{String,Any}("epochs"=>12,"fbmodels"=>"","learn"=>0.001,"gpu"=>true,"ffmodels"=>"BFModel","data"=>"MNIST")
+printout_interval = 1
+s = ArgParseSettings(
+  prog=nets.jl
+  description=
+  epilog=
+  usage=
+  version=Unspecified version
+  add_help=true
+  add_version=false
+  fromfile_prefix_chars=Set(Char[])
+  autofix_names=false
+  error_on_conflict=true
+  suppress_warnings=false
+  allow_ambiguous_opts=false
+  commands_are_required=true
+  default_group=
+  exc_handler=ArgParse.default_handler
+  preformatted_description=false
+  preformatted_epilog=false
+  exit_after_help=true
+  >> usage: nets.jl [--gpu] [--ffmodels FFMODELS] [--fbmodels FBMODELS]
+               [--learn LEARN] [--epochs EPOCHS] [--data DATA]
+  )
+test_folderpath_debris = ../digitclutter/digitdebris/testset/mat/
+test_folderpath_digits = ../digitclutter/digitclutter/testset/mat/
+time_format = HH:MM:SS
+time_steps = 4
+trainFeedforwardNet = trainFeedforwardNet
+trainReccurentNet = trainReccurentNet
+train_folderpath_debris = ../digitclutter/digitdebris/trainset/mat/
+train_folderpath_digits = ../digitclutter/digitclutter/trainset/mat/
+usegpu = true
+┌ Debug: --------End of VAR DUMP--------
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:244
+[13:15:45] Training BFModel with MNIST
+┌ Debug: loading MNIST dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:99
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 50000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (50000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Dimension of images (28, 28, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:147
+┌ Debug: Dimension of labels (10000,)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:148
+┌ Debug: loaded 500 batches of size 100 for training
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:150
+┌ Debug: loaded 100 batches of size 100 for validation
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:151
+┌ Debug: loaded 100 batches of size 100 for testing
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:152
+[13:18:11] INIT with Accuracy(val_set): 0.1056 and Loss(val_set): 0.709061
+[13:20:46] INIT with Accuracy(test_set): 0.1112 and Loss(test_set): 0.708358
+[13:24:18] Epoch   1: Accuracy: 0.1392, Loss: 0.339293
+[13:27:26] Epoch   2: Accuracy: 0.2502, Loss: 0.335924
+[13:30:30] Epoch   3: Accuracy: 0.3284, Loss: 0.333582
+[13:33:35] Epoch   4: Accuracy: 0.3693, Loss: 0.331574
+
+--------[30_08_2019 13:39:44]--------
+Base = Base
+Core = Core
+FBModel_names = ["BTModel"]
+FBModels = Dict("BTModel"=>:spoerer_model_bt,"BLModel"=>:spoerer_model_bl,"BLTModel"=>:spoerer_model_blt)
+FFModel_names = ["BFModel"]
+FFModels = Dict("BFModel"=>:spoerer_model_bf,"BKModel"=>:spoerer_model_bk,"BModel"=>:spoerer_model_b)
+Main = Main
+accuracy = Main.accuracy
+adapt_learnrate = adapt_learnrate
+batch_size = 100
+dataManager = Main.dataManager
+dataset_names = ["10debris"]
+date_format = dd_mm_yyyy
+debug_str = DEBUG_
+decay_rate = 0.1
+decay_step = 40
+epochs = 1
+image_size = (32, 32)
+init_learning_rate = 0.001
+io = IOStream(<file ../logs/DEBUG_log_BFModel.log>)
+lambda = 0.0005
+load_dataset = load_dataset
+log_save_location = ../logs/
+model_save_location = ../trainedModels/
+momentum = 0.9
+parsed_args = Dict{String,Any}("epochs"=>1,"fbmodels"=>"BTModel","learn"=>0.001,"gpu"=>true,"ffmodels"=>"BFModel","data"=>"10debris")
+printout_interval = 1
+s = ArgParseSettings(
+  prog=nets.jl
+  description=
+  epilog=
+  usage=
+  version=Unspecified version
+  add_help=true
+  add_version=false
+  fromfile_prefix_chars=Set(Char[])
+  autofix_names=false
+  error_on_conflict=true
+  suppress_warnings=false
+  allow_ambiguous_opts=false
+  commands_are_required=true
+  default_group=
+  exc_handler=ArgParse.default_handler
+  preformatted_description=false
+  preformatted_epilog=false
+  exit_after_help=true
+  >> usage: nets.jl [--gpu] [--ffmodels FFMODELS] [--fbmodels FBMODELS]
+               [--learn LEARN] [--epochs EPOCHS] [--data DATA]
+  )
+test_folderpath_debris = ../digitclutter/digitdebris/testset/mat/
+test_folderpath_digits = ../digitclutter/digitclutter/testset/mat/
+time_format = HH:MM:SS
+time_steps = 4
+trainFeedforwardNet = trainFeedforwardNet
+trainReccurentNet = trainReccurentNet
+train_folderpath_debris = ../digitclutter/digitdebris/trainset/mat/
+train_folderpath_digits = ../digitclutter/digitclutter/trainset/mat/
+usegpu = true
+┌ Debug: --------End of VAR DUMP--------
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:246
+[13:39:52] Training BFModel with 10debris
+┌ Debug: Reading 1 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris1.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 2 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris2.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 3 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris3.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 4 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris4.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 5 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris5.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 6 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris6.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 7 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris7.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 8 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris8.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 9 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris9.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 10 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris10.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 11 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris11.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 12 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris12.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 13 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris13.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 14 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris14.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 15 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris15.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 16 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris16.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 17 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris17.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 18 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris18.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 19 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris19.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 20 of 20 from ../digitclutter/digitdebris/trainset/mat/5000_10debris20.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Dimension of images (32, 32, 1, 100000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:68
+┌ Debug: Dimension of targets (10, 100000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:69
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: Reading 1 of 2 from ../digitclutter/digitdebris/testset/mat/5000_10debris1.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Reading 2 of 2 from ../digitclutter/digitdebris/testset/mat/5000_10debris2.mat
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:50
+┌ Debug: Dimension of images (32, 32, 1, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:68
+┌ Debug: Dimension of targets (10, 10000)
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:69
+┌ Debug: normalize dataset
+└ @ Main.dataManager /home/svendt/NNFeedbackOperations/src/dataManager.jl:167
+┌ Debug: loaded 1000 batches of size 100 for training
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:150
+┌ Debug: loaded 100 batches of size 100 for testing
+└ @ Main /home/svendt/NNFeedbackOperations/src/nets.jl:152
+[13:42:57] INIT with Accuracy(val_set): NaN and Loss(val_set): NaN
+[13:42:58] INIT with Accuracy(test_set): 0.1033 and Loss(test_set): 0.655369
+[13:49:28] Epoch   1: Accuracy: 0.1013, Loss: 0.341387
+[13:53:18] FINAL Accuracy(val_set): NaN and Loss(val_set): NaN
+[13:53:18] FINAL Accuracy(test_set): 0.1013 and Loss(test_set): 0.341361
